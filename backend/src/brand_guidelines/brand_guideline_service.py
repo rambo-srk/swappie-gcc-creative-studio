@@ -275,7 +275,7 @@ class BrandGuidelineService:
 
         # Splitting is required
         logger.info(
-            f"PDF size ({file_size} bytes) exceeds limit. Splitting file."
+            "PDF size (%s bytes) exceeds limit. Splitting file.", file_size
         )
         reader = PdfReader(io.BytesIO(file_contents))
         num_pages = len(reader.pages)
@@ -315,7 +315,7 @@ class BrandGuidelineService:
         self, guideline: BrandGuidelineModel
     ):
         """Deletes a guideline document and all its associated GCS assets."""
-        logger.info(f"Deleting old guideline '{guideline.id}' and its assets.")
+        logger.info("Deleting old guideline '%s' and its assets.", guideline.id)
 
         # Delete all associated PDF chunks from GCS concurrently
         delete_tasks = [

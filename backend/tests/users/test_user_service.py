@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for User Service."""
+
 
 from unittest.mock import AsyncMock, MagicMock
 
@@ -22,16 +24,16 @@ from src.users.user_model import UserRoleEnum
 from src.users.user_service import UserService
 
 
-@pytest.fixture
-def mock_user_repo():
+@pytest.fixture(name="mock_user_repo")
+def fixture_mock_user_repo():
     """Provides a mocked UserRepository."""
     # We mock the UserRepository class itself to avoid DB dependency
     repo = AsyncMock()
     return repo
 
 
-@pytest.fixture
-def user_service(mock_user_repo):
+@pytest.fixture(name="user_service")
+def fixture_user_service(mock_user_repo):
     """Provides a UserService with a mocked repository."""
     return UserService(user_repo=mock_user_repo)
 

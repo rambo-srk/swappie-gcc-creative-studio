@@ -22,8 +22,8 @@ from src.config.config_service import config_service
 from src.users.user_model import UserModel, UserRoleEnum
 
 
-@pytest.fixture
-def mock_user_service():
+@pytest.fixture(name="mock_user_service")
+def fixture_mock_user_service():
     service = AsyncMock()
     # Mock create_user_if_not_exists to return a user
     service.create_user_if_not_exists.return_value = UserModel(

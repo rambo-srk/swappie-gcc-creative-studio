@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""API endpoints for image generation."""
 
 
 from fastapi import (
@@ -82,12 +83,12 @@ async def generate_images(
         raise HTTPException(
             status_code=Status.HTTP_400_BAD_REQUEST,
             detail=str(value_error),
-        )
+        ) from value_error
     except Exception as e:
         raise HTTPException(
             status_code=Status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
-        )
+        ) from e
 
 
 @router.post("/generate-images-for-vto")
@@ -120,12 +121,12 @@ async def generate_images_vto(
         raise HTTPException(
             status_code=Status.HTTP_400_BAD_REQUEST,
             detail=str(value_error),
-        )
+        ) from value_error
     except Exception as e:
         raise HTTPException(
             status_code=Status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
-        )
+        ) from e
 
 
 @router.post("/upload-upscale", response_model=MediaItemResponse)
@@ -139,10 +140,10 @@ async def upload_upscale(
     gcs_uri: str | None = Form(None, alias="gcsUri"),
     original_filename: str | None = Form(None, alias="originalFilename"),
     workspace_id: int = Form(alias="workspaceId"),
-    aspectRatio: AspectRatioEnum | None = Form(None),
+    aspect_ratio: AspectRatioEnum | None = Form(None, alias="aspectRatio"),
     upscale_factor: str | None = Form(None, alias="upscaleFactor"),
     file_hash: str | None = Form(None, alias="fileHash"),
-    assetType: AssetTypeEnum | None = Form(None),
+    asset_type: AssetTypeEnum | None = Form(None, alias="assetType"),
     enhance_input_image: bool | None = Form(None, alias="enhance_input_image"),
     image_preservation_factor: float | None = Form(
         None,
@@ -169,13 +170,13 @@ async def upload_upscale(
         source_asset_id=source_asset_id,
         media_item_id_existing=media_item_id,
         upscale_factor=upscale_factor,
-        aspect_ratio=aspectRatio,
-        asset_type=assetType,
+        aspect_ratio=aspect_ratio,
+        asset_type=asset_type,
         gcs_uri=gcs_uri,
         file_bytes=file_bytes,
         filename=filename,
-        original_filename=original_filename,
-        file_hash=file_hash,
+        # original_filename=original_filename,
+        # file_hash=file_hash,
         scope=scope,
         mime_type=mime_type,
         enhance_input_image=enhance_input_image,
@@ -196,9 +197,9 @@ async def upscale_image(
         raise HTTPException(
             status_code=Status.HTTP_400_BAD_REQUEST,
             detail=str(value_error),
-        )
+        ) from value_error
     except Exception as e:
         raise HTTPException(
             status_code=Status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
-        )
+        ) from e

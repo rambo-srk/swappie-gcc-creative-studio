@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""IAM Signer credentials provider for GCS."""
+
 
 import datetime
 import logging
@@ -23,13 +25,14 @@ logger = logging.getLogger(__name__)
 
 
 class IamSignerCredentials(credentials.Signing):
-    """A custom credentials class that uses the IAM Credentials API to sign bytes.
-    This is used for generating **DOWNLOAD (GET)** presigned URLs.
+    """A custom credentials class that uses the IAM Credentials API to
+    sign bytes. This is used for generating **DOWNLOAD (GET)** presigned
+    URLs.
 
-    This pattern allows the backend's service account to generate URLs signed by a
-    *different* service account (`SIGNING_SA_EMAIL`), which only has read access.
-    This separates the permission to grant read access from the backend's other
-    permissions.
+    This pattern allows the backend's service account to generate URLs
+    signed by a *different* service account (`SIGNING_SA_EMAIL`), which
+    only has read access. This separates the permission to grant read
+    access from the backend's other permissions.
     """
 
     # In-memory cache for presigned URLs (persists across dependency injections)
@@ -84,9 +87,10 @@ class IamSignerCredentials(credentials.Signing):
     ) -> str:
         """Generates a v4 presigned URL for a GCS object.
 
-        The user or service account running this code needs 'roles/storage.objectViewer'
-        permission on the bucket, or a custom role with 'storage.objects.get'. The
-        principal running this code needs 'roles/iam.serviceAccountTokenCreator' on the
+        The user or service account running this code needs
+        'roles/storage.objectViewer' permission on the bucket, or a custom
+        role with 'storage.objects.get'. The principal running this code
+        needs 'roles/iam.serviceAccountTokenCreator' on the
         `SIGNING_SA_EMAIL` service account.
 
         Args:
@@ -118,7 +122,7 @@ class IamSignerCredentials(credentials.Signing):
 
             # 3. Generate the signed URL, passing the custom credentials.
             logger.info(
-                f"Generating presigned URL for {gcs_uri} (not in cache)"
+                "Generating presigned URL for %s (not in cache)", gcs_uri
             )
             url = blob.generate_signed_url(
                 version="v4",
@@ -131,7 +135,9 @@ class IamSignerCredentials(credentials.Signing):
             self._set_cached_url(gcs_uri, expiration_hours, url)
             return url
         except Exception as e:
-            logger.error(f"Error generating presigned URL for {gcs_uri}: {e}")
+            logger.error(
+                "Error generating presigned URL for %s: %s", gcs_uri, e
+            )
             return gcs_uri
 
     def generate_v4_upload_signed_url(
@@ -143,12 +149,14 @@ class IamSignerCredentials(credentials.Signing):
     ) -> tuple[str | None, str | None]:
         """Generates a v4 signed URL for a client-side **UPLOAD (PUT)**.
 
-        This method uses the custom signing mechanism of this class to generate
-        a URL, which works in environments without a private key (like local dev).
+        This method uses the custom signing mechanism of this class to
+        generate a URL, which works in environments without a private key
+        (like local dev).
 
-        The service account running this code needs `roles/iam.serviceAccountTokenCreator`
-        on the `SIGNING_SA_EMAIL` service account. The `SIGNING_SA_EMAIL` service
-        account needs `roles/storage.objectCreator` on the bucket.
+        The service account running this code needs
+        `roles/iam.serviceAccountTokenCreator` on the `SIGNING_SA_EMAIL`
+        service account. The `SIGNING_SA_EMAIL` service account needs
+        `roles/storage.objectCreator` on the bucket.
 
         Args:
             destination_blob_name: The desired name for the object in GCS.
@@ -183,7 +191,7 @@ class IamSignerCredentials(credentials.Signing):
             return url, gcs_uri
         except Exception as e:
             logger.error(
-                f"Failed to generate v4 upload signed URL: {e}", exc_info=True
+                "Failed to generate v4 upload signed URL: %s", e, exc_info=True
             )
             return None, None
 
@@ -202,8 +210,11 @@ class IamSignerCredentials(credentials.Signing):
             return response.signed_blob
         except Exception as e:
             logger.error(
-                f"IAM PERMISSION DENIED: The principal running this code does not have "
-                f"'roles/iam.serviceAccountTokenCreator' on the service account '{self.service_account_email}'.",
+                "IAM PERMISSION DENIED: The principal running this code "
+                "does not have "
+                "'roles/iam.serviceAccountTokenCreator' on the service "
+                "account '%s'.",
+                self.service_account_email,
             )
             raise e  # Re-raise the exception to be caught by the caller
 

@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Media Templates Service."""
+
 
 from unittest.mock import AsyncMock, MagicMock
 
@@ -32,8 +34,8 @@ from src.media_templates.schema.media_template_model import (
 from src.users.user_model import UserModel
 
 
-@pytest.fixture
-def service():
+@pytest.fixture(name="service")
+def fixture_service():
     mock_template_repo = AsyncMock()
     mock_media_item_repo = AsyncMock()
     mock_source_asset_repo = AsyncMock()

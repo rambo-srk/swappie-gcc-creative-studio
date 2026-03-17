@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Source Asset Controller."""
+
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -33,15 +35,15 @@ from src.users.user_model import UserModel
 from src.workspaces.workspace_auth_guard import WorkspaceAuth
 
 
-@pytest.fixture
-def mock_user():
+@pytest.fixture(name="mock_user")
+def fixture_mock_user():
     return UserModel(
         id=1, email="test@example.com", name="Test User", roles=["user"]
     )
 
 
-@pytest.fixture
-def mock_service():
+@pytest.fixture(name="mock_service")
+def fixture_mock_service():
     service = AsyncMock()
     service.upload_asset = AsyncMock()
     service.convert_to_png = AsyncMock()
@@ -52,15 +54,15 @@ def mock_service():
     return service
 
 
-@pytest.fixture
-def mock_workspace_auth():
+@pytest.fixture(name="mock_workspace_auth")
+def fixture_mock_workspace_auth():
     auth = AsyncMock()
     auth.authorize = AsyncMock()
     return auth
 
 
-@pytest.fixture
-def client(mock_user, mock_service, mock_workspace_auth):
+@pytest.fixture(name="client")
+def fixture_client(mock_user, mock_service, mock_workspace_auth):
     app = FastAPI()
     app.include_router(router)
 

@@ -143,7 +143,7 @@ class WorkflowsExecutorService:
             except Exception as e:
                 if isinstance(e, HTTPException):
                     raise e
-                logger.error(f"Error during polling: {e}")
+                logger.error("Error during polling: %s", e)
                 # Continue polling? Or fail?
                 # If we can't check status, we might be blind.
 
@@ -198,11 +198,11 @@ class WorkflowsExecutorService:
 
         # Resolve Source Assets
         for asset_id in asset_ids:
-            logger.info(f"Resolving source asset {asset_id}")
+            logger.info("Resolving source asset %s", asset_id)
             try:
                 url = f"{self.backend_url}/api/source_assets/{asset_id}"
                 response = await self.rest_client.get(url, headers=headers)
-                logger.info(f"Source asset status: {response.status_code}")
+                logger.info("Source asset status: %s", response.status_code)
                 if response.status_code == 200:
                     data = response.json()
                     gcs_uri = data.get("gcsUri") or data.get("gcs_uri")
@@ -212,7 +212,7 @@ class WorkflowsExecutorService:
                         or "image/jpeg"
                     )
                     if gcs_uri:
-                        logger.info(f"Adding part from URI: {gcs_uri}")
+                        logger.info("Adding part from URI: %s", gcs_uri)
                         parts.append(
                             types.Part.from_uri(
                                 file_uri=gcs_uri, mime_type=mime_type
@@ -220,7 +220,7 @@ class WorkflowsExecutorService:
                         )
             except Exception as e:
                 logger.error(f"Error resolving source asset {asset_id}: {e}")
-        logger.info(f"Resolved media parts: {parts}")
+        logger.info("Resolved media parts: %s", parts)
         return parts
 
     async def generate_text(
@@ -228,7 +228,7 @@ class WorkflowsExecutorService:
         request: GenerateTextRequest,
         authorization: str | None = None,
     ):
-        logger.info(f"authorization: {authorization}")
+        logger.info("authorization: %s", authorization)
         generate_content_config = types.GenerateContentConfig(
             temperature=request.config.temperature,
             top_p=0.95,
@@ -255,7 +255,7 @@ class WorkflowsExecutorService:
 
         contents = []
 
-        logger.info(f"generate_text inputs: {request.inputs}")
+        logger.info("generate_text inputs: %s", request.inputs)
         # 1. Add Text Prompt
         if isinstance(request.inputs.prompt, str):
             contents.append(types.Part.from_text(text=request.inputs.prompt))
@@ -267,7 +267,7 @@ class WorkflowsExecutorService:
                 request.inputs.input_images,
                 authorization,
             )
-            logger.info(f"Image parts: {image_parts}")
+            logger.info("Image parts: %s", image_parts)
             contents.extend(image_parts)
 
         # 3. Add Videos
@@ -317,7 +317,7 @@ class WorkflowsExecutorService:
         response = await self.rest_client.post(url, json=body, headers=headers)
 
         if response.status_code != 200:
-            logger.error(f"Backend error: {response.text}")
+            logger.error("Backend error: %s", response.text)
             raise HTTPException(
                 status_code=response.status_code,
                 detail=f"Backend error: {response.text}",
@@ -366,7 +366,7 @@ class WorkflowsExecutorService:
         response = await self.rest_client.post(url, json=body, headers=headers)
 
         if response.status_code != 200:
-            logger.error(f"Backend error: {response.text}")
+            logger.error("Backend error: %s", response.text)
             raise HTTPException(
                 status_code=response.status_code,
                 detail=f"Backend error: {response.text}",
@@ -440,7 +440,7 @@ class WorkflowsExecutorService:
         response = await self.rest_client.post(url, json=body, headers=headers)
 
         if response.status_code != 200:
-            logger.error(f"Backend error: {response.text}")
+            logger.error("Backend error: %s", response.text)
             raise HTTPException(
                 status_code=response.status_code,
                 detail=f"Backend error: {response.text}",
@@ -533,7 +533,7 @@ class WorkflowsExecutorService:
         response = await self.rest_client.post(url, json=body, headers=headers)
 
         if response.status_code != 200:
-            logger.error(f"Backend error: {response.text}")
+            logger.error("Backend error: %s", response.text)
             raise HTTPException(
                 status_code=response.status_code,
                 detail=f"Backend error: {response.text}",
@@ -583,7 +583,7 @@ class WorkflowsExecutorService:
         response = await self.rest_client.post(url, json=body, headers=headers)
 
         if response.status_code != 200:
-            logger.error(f"Backend error: {response.text}")
+            logger.error("Backend error: %s", response.text)
             raise HTTPException(
                 status_code=response.status_code,
                 detail=f"Backend error: {response.text}",

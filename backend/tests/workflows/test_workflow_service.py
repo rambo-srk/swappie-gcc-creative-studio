@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Workflow Service."""
+
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -32,8 +34,8 @@ from src.workflows.schema.workflow_run_model import (
 from src.workflows.workflow_service import WorkflowService
 
 
-@pytest.fixture
-def mock_workflow_repo():
+@pytest.fixture(name="mock_workflow_repo")
+def fixture_mock_workflow_repo():
     repo = AsyncMock()
     repo.create = AsyncMock()
     repo.get_by_id = AsyncMock()
@@ -42,8 +44,8 @@ def mock_workflow_repo():
     return repo
 
 
-@pytest.fixture
-def mock_run_repo():
+@pytest.fixture(name="mock_run_repo")
+def fixture_mock_run_repo():
     repo = AsyncMock()
     repo.create = AsyncMock()
     repo.get_by_id = AsyncMock()
@@ -51,8 +53,8 @@ def mock_run_repo():
     return repo
 
 
-@pytest.fixture
-def workflow_service(mock_workflow_repo, mock_run_repo):
+@pytest.fixture(name="workflow_service")
+def fixture_workflow_service(mock_workflow_repo, mock_run_repo):
     # Pass None for source_asset_service for now as it's not used in basic tests
     return WorkflowService(
         workflow_repository=mock_workflow_repo,
@@ -61,15 +63,15 @@ def workflow_service(mock_workflow_repo, mock_run_repo):
     )
 
 
-@pytest.fixture
-def sample_user():
+@pytest.fixture(name="sample_user")
+def fixture_sample_user():
     return UserModel(
         id=1, email="test@example.com", name="Test User", roles=["user"]
     )
 
 
-@pytest.fixture
-def sample_workflow_model():
+@pytest.fixture(name="sample_workflow_model")
+def fixture_sample_workflow_model():
     return WorkflowModel(
         id="id-1234",
         user_id=1,
@@ -88,8 +90,8 @@ def sample_workflow_model():
     )
 
 
-@pytest.fixture
-def sample_workflow_create_dto():
+@pytest.fixture(name="sample_workflow_create_dto")
+def fixture_sample_workflow_create_dto():
     return WorkflowCreateDto(
         name="Test Workflow",
         description="A test workflow",

@@ -79,7 +79,7 @@ class WorkflowService:
     ):
         """This function contains the business logic for generating the workflow."""
         user_id = workflow.user_id
-        logger.info(f"Received workflow generation request for user {user_id}")
+        logger.info("Received workflow generation request for user %s", user_id)
         # A very basic transformation to a GCP-like workflow structure
         step_outputs = {}
         gcp_steps = []
@@ -269,7 +269,7 @@ class WorkflowService:
             except Exception as e:
                 # Rollback DB creation if GCP creation fails
                 logger.error(
-                    f"Failed to create GCP workflow: {e}. Rolling back DB."
+                    "Failed to create GCP workflow: %s. Rolling back DB.", e
                 )
                 await self.workflow_repository.delete(created_workflow.id)
                 raise e
@@ -420,7 +420,7 @@ class WorkflowService:
                 workflow_snapshot=snapshot_data,
             )
             await self.workflow_run_repository.create(workflow_run)
-            logger.info(f"Created snapshot for execution {execution_id}")
+            logger.info("Created snapshot for execution %s", execution_id)
         except Exception as e:
             logger.exception(
                 f"Failed to create execution snapshot for {execution_id}: {e}",
@@ -564,10 +564,12 @@ class WorkflowService:
             if response.status_code == 200:
                 step_entries = response.json().get("stepEntries", [])
             else:
-                logger.warning(f"Failed to fetch step entries: {response.text}")
+                logger.warning(
+                    "Failed to fetch step entries: %s", response.text
+                )
                 step_entries = []  # Ensure step_entries is defined
         except Exception as e:
-            logger.error(f"Error fetching step entries: {e}")
+            logger.error("Error fetching step entries: %s", e)
             step_entries = []
 
         # Calculate duration
@@ -584,7 +586,7 @@ class WorkflowService:
 
         # Try to fetch snapshot from DB
         logger.info(
-            f"Attempting to fetch snapshot for execution_id: {execution_id}"
+            "Attempting to fetch snapshot for execution_id: %s", execution_id
         )
 
         # Ensure we check the short ID if a long ID is passed
@@ -598,7 +600,7 @@ class WorkflowService:
 
         workflow_model = None
         if snapshot_run and snapshot_run.workflow_snapshot:
-            logger.info(f"Snapshot FOUND for execution_id: {execution_id}")
+            logger.info("Snapshot FOUND for execution_id: %s", execution_id)
             # Rehydrate WorkflowModel from snapshot
             try:
                 # snapshot_run.workflow_snapshot is a dict
@@ -606,7 +608,7 @@ class WorkflowService:
                     snapshot_run.workflow_snapshot,
                 )
             except Exception as e:
-                logger.error(f"Failed to rehydrate snapshot: {e}")
+                logger.error("Failed to rehydrate snapshot: %s", e)
                 workflow_model = None
         else:
             logger.warning(
@@ -664,7 +666,7 @@ class WorkflowService:
                     )
                 except Exception as e:
                     logger.warning(
-                        f"Failed to lazily update execution status: {e}"
+                        "Failed to lazily update execution status: %s", e
                     )
         # --- Lazy Status Update End ---
 

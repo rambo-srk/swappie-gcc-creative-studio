@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Generation Options Controller."""
+
 
 import pytest
 from fastapi import FastAPI
@@ -19,8 +21,8 @@ from fastapi.testclient import TestClient
 from src.generation_options.generation_options_controller import router
 
 
-@pytest.fixture
-def client():
+@pytest.fixture(name="client")
+def fixture_client():
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)

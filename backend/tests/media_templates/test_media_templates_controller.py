@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Media Templates Controller."""
+
 
 from unittest.mock import AsyncMock
 
@@ -24,8 +26,8 @@ from src.media_templates.media_templates_service import MediaTemplateService
 from src.users.user_model import UserModel, UserRoleEnum
 
 
-@pytest.fixture
-def mock_admin():
+@pytest.fixture(name="mock_admin")
+def fixture_mock_admin():
     return UserModel(
         id=1,
         email="admin@example.com",
@@ -34,8 +36,8 @@ def mock_admin():
     )
 
 
-@pytest.fixture
-def mock_service():
+@pytest.fixture(name="mock_service")
+def fixture_mock_service():
     service = AsyncMock()
     service.create_template_from_media_item = AsyncMock()
     service.find_all_templates = AsyncMock()
@@ -45,8 +47,8 @@ def mock_service():
     return service
 
 
-@pytest.fixture
-def client(mock_admin, mock_service):
+@pytest.fixture(name="client")
+def fixture_client(mock_admin, mock_service):
     app = FastAPI()
     app.include_router(router)
 

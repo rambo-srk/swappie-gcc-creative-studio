@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Workspace Repository."""
+
 
 from unittest.mock import MagicMock
 
@@ -19,8 +21,8 @@ import pytest
 from src.workspaces.repository.workspace_repository import WorkspaceRepository
 
 
-@pytest.fixture
-def workspace_repo(db_session_mock):
+@pytest.fixture(name="workspace_repo")
+def fixture_workspace_repo(db_session_mock):
     """Provides a WorkspaceRepository with mocked AsyncSession."""
     return WorkspaceRepository(db=db_session_mock)
 

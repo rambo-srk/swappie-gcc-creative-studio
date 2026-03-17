@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Module for Conftest."""
+
 
 import os
 import sys
@@ -36,8 +38,8 @@ resourcemanager_v3.ProjectsClient = MagicMock()
 
 
 # 1. Patch database migrations BEFORE importing app to avoid lifespan triggering them
-@pytest.fixture(scope="session", autouse=True)
-def mock_migrations():
+@pytest.fixture(name="mock_migrations", scope="session", autouse=True)
+def fixture_mock_migrations():
     """Bypasses database migrations during startup."""
     with patch(
         "src.database_migrations.run_pending_migrations", AsyncMock()
@@ -53,8 +55,8 @@ from src.users.user_model import UserModel, UserRoleEnum
 # --- User Model Fixtures ---
 
 
-@pytest.fixture
-def mock_user():
+@pytest.fixture(name="mock_user")
+def fixture_mock_user():
     """Provides a mock regular user."""
     return UserModel(
         id=1,
@@ -65,8 +67,8 @@ def mock_user():
     )
 
 
-@pytest.fixture
-def mock_admin():
+@pytest.fixture(name="mock_admin")
+def fixture_mock_admin():
     """Provides a mock admin user."""
     return UserModel(
         id=2,
@@ -77,8 +79,8 @@ def mock_admin():
     )
 
 
-@pytest.fixture
-def mock_creator():
+@pytest.fixture(name="mock_creator")
+def fixture_mock_creator():
     """Provides a mock creator user."""
     return UserModel(
         id=3,
@@ -92,8 +94,8 @@ def mock_creator():
 # --- Database Fixtures ---
 
 
-@pytest.fixture
-def db_session_mock():
+@pytest.fixture(name="db_session_mock")
+def fixture_db_session_mock():
     """Provides a mock AsyncSession."""
     return AsyncMock()
 
@@ -120,19 +122,19 @@ def _create_api_client(user_model, db_mock):
     app.dependency_overrides.clear()
 
 
-@pytest.fixture
-def api_client(mock_user, db_session_mock):
+@pytest.fixture(name="api_client")
+def fixture_api_client(mock_user, db_session_mock):
     """Provides a TestClient authenticated as a regular USER."""
     yield from _create_api_client(mock_user, db_session_mock)
 
 
-@pytest.fixture
-def admin_client(mock_admin, db_session_mock):
+@pytest.fixture(name="admin_client")
+def fixture_admin_client(mock_admin, db_session_mock):
     """Provides a TestClient authenticated as an ADMIN."""
     yield from _create_api_client(mock_admin, db_session_mock)
 
 
-@pytest.fixture
-def creator_client(mock_creator, db_session_mock):
+@pytest.fixture(name="creator_client")
+def fixture_creator_client(mock_creator, db_session_mock):
     """Provides a TestClient authenticated as a CREATOR."""
     yield from _create_api_client(mock_creator, db_session_mock)

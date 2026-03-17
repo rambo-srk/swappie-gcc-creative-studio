@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for User Controller."""
+
 
 from unittest.mock import AsyncMock
 
@@ -23,14 +25,14 @@ from src.users.user_model import UserModel
 from src.users.user_service import UserService
 
 
-@pytest.fixture
-def mock_user_service():
+@pytest.fixture(name="mock_user_service")
+def fixture_mock_user_service():
     """Provides a mocked UserService."""
     return AsyncMock()
 
 
-@pytest.fixture(autouse=True)
-def override_user_service(mock_user_service):
+@pytest.fixture(name="override_user_service", autouse=True)
+def fixture_override_user_service(mock_user_service):
     """Overrides the UserService dependency in the app."""
     app.dependency_overrides[UserService] = lambda: mock_user_service
     yield

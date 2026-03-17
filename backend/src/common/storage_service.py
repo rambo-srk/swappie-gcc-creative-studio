@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Google Cloud Storage interface service."""
+
 
 import base64
 import logging
@@ -35,7 +37,7 @@ class GcsService:
         self.bucket_name = bucket_name or self.cfg.GENMEDIA_BUCKET
         self.bucket = self.client.bucket(self.bucket_name)
         logger.info(
-            f"GcsService initialized for bucket: gs://{self.bucket_name}"
+            "GcsService initialized for bucket: gs://%s", self.bucket_name
         )
 
     def download_from_gcs(
@@ -63,11 +65,15 @@ class GcsService:
             return destination_file_path
         except exceptions.NotFound:
             logger.error(
-                f"Blob '{gcs_uri_path}' not found in bucket '{self.bucket_name}'.",
+                "Blob '%s' not found in bucket '%s'.",
+                gcs_uri_path,
+                self.bucket_name,
             )
             return None
         except exceptions.GoogleAPICallError as e:
-            logger.error(f"Failed to download '{gcs_uri_path}' from GCS: {e}")
+            logger.error(
+                "Failed to download '%s' from GCS: %s", gcs_uri_path, e
+            )
             return None
 
     def download_bytes_from_gcs(self, gcs_uri: str) -> bytes | None:
@@ -81,7 +87,7 @@ class GcsService:
 
         """
         if not gcs_uri.startswith("gs://"):
-            logger.error(f"Invalid GCS URI provided: {gcs_uri}")
+            logger.error("Invalid GCS URI provided: %s", gcs_uri)
             return None
 
         try:
@@ -90,10 +96,10 @@ class GcsService:
             blob = bucket.blob(blob_name)
             return blob.download_as_bytes()
         except exceptions.NotFound:
-            logger.error(f"Blob '{gcs_uri}' not found.")
+            logger.error("Blob '%s' not found.", gcs_uri)
             return None
-        except Exception as e:
-            logger.error(f"Failed to download bytes from '{gcs_uri}': {e}")
+        except (ValueError, exceptions.GoogleAPIError) as e:
+            logger.error("Failed to download bytes from '%s': %s", gcs_uri, e)
             return None
 
     def download_stream_from_gcs(self, gcs_uri: str):
@@ -104,7 +110,7 @@ class GcsService:
 
         """
         if not gcs_uri.startswith("gs://"):
-            logger.error(f"Invalid GCS URI provided: {gcs_uri}")
+            logger.error("Invalid GCS URI provided: %s", gcs_uri)
             return
 
         try:
@@ -116,7 +122,7 @@ class GcsService:
                 while chunk := f.read(8192):
                     yield chunk
         except Exception as e:
-            logger.error(f"Failed to stream from '{gcs_uri}': {e}")
+            logger.error("Failed to stream from '%s': %s", gcs_uri, e)
             raise e
 
     def upload_file_to_gcs(
@@ -153,16 +159,17 @@ class GcsService:
         except exceptions.NotFound:
             # This specific error usually means the BUCKET itself does not exist.
             logger.error(
-                f"Upload failed: The bucket 'gs://{self.bucket_name}' was not found.",
+                "Upload failed: The bucket 'gs://%s' was not found.",
+                self.bucket_name,
             )
             return None
         except exceptions.GoogleAPICallError as e:
-            logger.error(f"Failed to upload '{destination_blob_name}': {e}")
+            logger.error("Failed to upload '%s': %s", destination_blob_name, e)
             return None
 
     def upload_bytes_to_gcs(
         self,
-        bytes: bytes,
+        content_bytes: bytes,
         destination_blob_name: str,
         mime_type: str,
     ):
@@ -175,13 +182,13 @@ class GcsService:
         """
         try:
             blob = self.bucket.blob(destination_blob_name)
-            blob.upload_from_string(bytes, content_type=mime_type)
-            return f"gs://{self.bucket_name}/{destination_blob_name}"
+            blob.upload_from_string(content_bytes, content_type=mime_type)
+            return "gs://%s/%s", self.bucket_name, destination_blob_name
         except exceptions.NotFound:
-            logger.error(f"Blob '{destination_blob_name}' not found.")
+            logger.error("Blob '%s' not found.", destination_blob_name)
             return None
         except exceptions.GoogleAPICallError as e:
-            logger.error(f"Failed to upload '{destination_blob_name}': {e}")
+            logger.error("Failed to upload '%s': %s", destination_blob_name, e)
             return None
 
     def delete_blob_from_uri(self, gcs_uri: str):
@@ -196,7 +203,9 @@ class GcsService:
         """
         if not gcs_uri.startswith(f"gs://{self.bucket_name}/"):
             logger.error(
-                f"GCS URI '{gcs_uri}' does not belong to bucket '{self.bucket_name}'.",
+                "GCS URI '%s' does not belong to bucket '%s'.",
+                gcs_uri,
+                self.bucket_name,
             )
             return False
 
@@ -204,13 +213,13 @@ class GcsService:
         blob = self.bucket.blob(blob_name)
         try:
             blob.delete()
-            logger.info(f"Successfully deleted blob: {gcs_uri}")
+            logger.info("Successfully deleted blob: %s", gcs_uri)
             return True
         except exceptions.NotFound:
-            logger.warning(f"Blob not found, could not delete: {gcs_uri}")
+            logger.warning("Blob not found, could not delete: %s", gcs_uri)
             return True  # Treat as success if it's already gone
         except exceptions.GoogleAPICallError as e:
-            logger.error(f"Failed to delete blob '{gcs_uri}': {e}")
+            logger.error("Failed to delete blob '%s': %s", gcs_uri, e)
             return False
 
     def store_to_gcs(
@@ -225,10 +234,12 @@ class GcsService:
         """Store contents to GCS"""
         actual_bucket_name = bucket_name if bucket_name else self.bucket_name
         logger.info(
-            f"Target project {self.cfg.PROJECT_ID}, target bucket {actual_bucket_name}",
+            "Target project %s, target bucket %s",
+            self.cfg.PROJECT_ID,
+            actual_bucket_name,
         )
         destination_blob_name = f"{folder}/{file_name}"
-        logger.info(f"Destination {destination_blob_name}")
+        logger.info("Destination %s", destination_blob_name)
         try:
             blob = self.bucket.blob(destination_blob_name)
 
@@ -242,14 +253,16 @@ class GcsService:
             else:
                 return ""
 
-            return f"gs://{actual_bucket_name}/{destination_blob_name}"
+            return "gs://%s/%s", actual_bucket_name, destination_blob_name
         except exceptions.NotFound:
             logger.error(
-                f"Blob '{destination_blob_name}' not found in bucket '{self.bucket_name}'.",
+                "Blob '%s' not found in bucket '%s'.",
+                destination_blob_name,
+                self.bucket_name,
             )
             return None
         except exceptions.GoogleAPICallError as e:
             logger.error(
-                f"Failed to download '{destination_blob_name}' from GCS: {e}"
+                "Failed to download '%s' from GCS: %s", destination_blob_name, e
             )
             return None

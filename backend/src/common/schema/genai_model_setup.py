@@ -50,7 +50,7 @@ class GenAIModelSetup:
                     vertexai=config.INIT_VERTEX,
                 )
             except Exception as e:
-                logger.error(f"Failed to initialize GenAI client: {e}")
+                logger.error("Failed to initialize GenAI client: %s", e)
                 raise
         return cls._client
 

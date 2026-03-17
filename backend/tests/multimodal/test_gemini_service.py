@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Gemini Service."""
+
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -24,8 +26,8 @@ from src.multimodal.gemini_service import (
 )
 
 
-@pytest.fixture
-def gemini_service():
+@pytest.fixture(name="gemini_service")
+def fixture_gemini_service():
     with patch(
         "src.multimodal.gemini_service.GeminiModelSetup.init"
     ) as mock_init:

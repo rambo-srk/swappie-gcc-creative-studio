@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Service for workbench project management."""
+
 
 import asyncio
 import logging
@@ -49,22 +51,17 @@ class WorkbenchService:
             # 1. Organize Clips
             video_clips = sorted(
                 [c for c in request.clips if c.type == "video"],
-                key=lambda x: x.startTime,
+                key=lambda x: x.start_time,
             )
             audio_clips = sorted(
                 [c for c in request.clips if c.type == "audio"],
-                key=lambda x: x.startTime,
+                key=lambda x: x.start_time,
             )
 
             if not video_clips:
                 raise ValueError(
                     "No video clips found in timeline. At least one video clip is required.",
                 )
-
-            total_duration = max(
-                (c.startTime + c.duration for c in request.clips),
-                default=0,
-            )
 
             # 2. Download Assets (Deduplicated)
             url_to_local_path = {}
@@ -158,20 +155,20 @@ class WorkbenchService:
             # Group audio clips by trackIndex
             audio_tracks = {}
             for clip in audio_clips:
-                audio_tracks.setdefault(clip.trackIndex, []).append(clip)
+                audio_tracks.setdefault(clip.track_index, []).append(clip)
 
             audio_mix_inputs = [a_main_raw]
 
             for track_idx, clips in audio_tracks.items():
                 # Sort clips by time
-                clips.sort(key=lambda x: x.startTime)
+                clips.sort(key=lambda x: x.start_time)
 
                 track_segments = []
                 cursor_time = 0.0
 
                 for k, clip in enumerate(clips):
                     # 1. Gap Handling
-                    gap_duration = clip.startTime - cursor_time
+                    gap_duration = clip.start_time - cursor_time
                     if gap_duration > 0.01:  # Small tolerance
                         gap_label = f"[track{track_idx}_gap_{k}]"
                         filter_chains.append(
@@ -190,7 +187,7 @@ class WorkbenchService:
                     )
                     track_segments.append(clip_label)
 
-                    cursor_time = clip.startTime + clip.duration
+                    cursor_time = clip.start_time + clip.duration
 
                 # 3. Concat Track Segments
                 if track_segments:
@@ -235,7 +232,7 @@ class WorkbenchService:
                 output_path,
             ]
 
-            logger.info(f"Running FFmpeg IDs: {[u for u in unique_urls_list]}")
+            logger.info("Running FFmpeg IDs: %s", [u for u in unique_urls_list])
 
             process = await asyncio.to_thread(
                 subprocess.run,
@@ -245,13 +242,13 @@ class WorkbenchService:
             )
 
             if process.returncode != 0:
-                logger.error(f"FFmpeg failed: {process.stderr.decode()}")
+                logger.error("FFmpeg failed: %s", process.stderr.decode())
                 raise RuntimeError(f"FFmpeg failed: {process.stderr.decode()}")
 
             return output_path, temp_dir
 
         except Exception as e:
-            logger.error(f"Render failed: {e}")
+            logger.error("Render failed: %s", e)
             if "temp_dir" in locals() and os.path.exists(temp_dir):
                 shutil.rmtree(temp_dir)
             raise e
@@ -302,5 +299,5 @@ class WorkbenchService:
             blob = bucket.blob(blob_name)
             blob.download_to_filename(dest)
         except Exception as e:
-            logger.error(f"Failed to download GCS blob {gcs_uri}: {e}")
+            logger.error("Failed to download GCS blob %s: %s", gcs_uri, e)
             raise e

@@ -134,7 +134,7 @@ class SourceAssetService:
             )
             return AspectRatioEnum.OTHER
 
-        logger.info(f"Deduced aspect ratio as {closest_enum.value}")
+        logger.info("Deduced aspect ratio as %s", closest_enum.value)
         return closest_enum
 
     async def _create_asset_response(
@@ -517,7 +517,7 @@ class SourceAssetService:
 
         # 2. Skip deleting the file from GCS for soft delete
         # This allows for potential restoration of the asset in the future.
-        # logger.info(f"Skipping GCS file deletion for soft delete: {asset_to_delete.gcs_uri}")
+        # logger.info("Skipping GCS file deletion for soft delete: %s", asset_to_delete.gcs_uri)
 
         # 3. Mark the document as deleted in the database
         logger.info(

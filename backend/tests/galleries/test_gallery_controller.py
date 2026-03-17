@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Gallery Controller."""
+
 
 from unittest.mock import AsyncMock
 
@@ -26,8 +28,8 @@ from src.users.user_model import UserModel, UserRoleEnum
 from src.workspaces.workspace_auth_guard import WorkspaceAuth
 
 
-@pytest.fixture
-def mock_admin():
+@pytest.fixture(name="mock_admin")
+def fixture_mock_admin():
     return UserModel(
         id=1,
         email="admin@example.com",
@@ -36,8 +38,8 @@ def mock_admin():
     )
 
 
-@pytest.fixture
-def mock_user():
+@pytest.fixture(name="mock_user")
+def fixture_mock_user():
     return UserModel(
         id=2,
         email="user@example.com",
@@ -46,8 +48,8 @@ def mock_user():
     )
 
 
-@pytest.fixture
-def mock_service():
+@pytest.fixture(name="mock_service")
+def fixture_mock_service():
     service = AsyncMock()
     service.get_paginated_gallery = AsyncMock()
     service.get_media_by_id = AsyncMock()
@@ -57,15 +59,15 @@ def mock_service():
     return service
 
 
-@pytest.fixture
-def mock_workspace_auth():
+@pytest.fixture(name="mock_workspace_auth")
+def fixture_mock_workspace_auth():
     auth = AsyncMock()
     auth.authorize = AsyncMock()
     return auth
 
 
-@pytest.fixture
-def client(mock_user, mock_service, mock_workspace_auth):
+@pytest.fixture(name="client")
+def fixture_client(mock_user, mock_service, mock_workspace_auth):
     app = FastAPI()
     app.include_router(router)
 
@@ -77,6 +79,7 @@ def client(mock_user, mock_service, mock_workspace_auth):
 
 
 def test_search_gallery_items_non_admin_no_workspace(client, mock_service):
+    _ = mock_service
     # User is not admin. search_dto missing workspace_id should fail with 400
     payload = {"limit": 12, "offset": 0}
     response = client.post("/api/gallery/search", json=payload)

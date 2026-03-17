@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Veo Service."""
+
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -34,8 +36,8 @@ from src.videos.veo_service import (
 )
 
 
-@pytest.fixture
-def mock_media_repo():
+@pytest.fixture(name="mock_media_repo")
+def fixture_mock_media_repo():
     repo = AsyncMock()
     repo.create = AsyncMock()
     repo.get_by_id = AsyncMock()
@@ -43,22 +45,22 @@ def mock_media_repo():
     return repo
 
 
-@pytest.fixture
-def mock_source_asset_repo():
+@pytest.fixture(name="mock_source_asset_repo")
+def fixture_mock_source_asset_repo():
     repo = AsyncMock()
     repo.get_by_id = AsyncMock()
     return repo
 
 
-@pytest.fixture
-def mock_gemini_service():
+@pytest.fixture(name="mock_gemini_service")
+def fixture_mock_gemini_service():
     service = AsyncMock()
     service.enhance_prompt_from_dto = AsyncMock(return_value="Enhanced Prompt")
     return service
 
 
-@pytest.fixture
-def mock_gcs_service():
+@pytest.fixture(name="mock_gcs_service")
+def fixture_mock_gcs_service():
     service = AsyncMock()
     service.download_from_gcs = AsyncMock(return_value="/tmp/local_video.mp4")
     service.upload_file_to_gcs = AsyncMock(
@@ -67,8 +69,8 @@ def mock_gcs_service():
     return service
 
 
-@pytest.fixture
-def veo_service(
+@pytest.fixture(name="veo_service")
+def fixture_veo_service(
     mock_media_repo,
     mock_source_asset_repo,
     mock_gemini_service,
@@ -83,15 +85,15 @@ def veo_service(
     )
 
 
-@pytest.fixture
-def sample_user():
+@pytest.fixture(name="sample_user")
+def fixture_sample_user():
     return UserModel(
         id=1, email="test@example.com", name="Test User", roles=["user"]
     )
 
 
-@pytest.fixture
-def sample_create_veo_dto():
+@pytest.fixture(name="sample_create_veo_dto")
+def fixture_sample_create_veo_dto():
     return CreateVeoDto(
         workspace_id=1,
         prompt="A cute cat running",

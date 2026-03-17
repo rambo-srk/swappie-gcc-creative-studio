@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Workspace Controller."""
+
 
 from unittest.mock import AsyncMock
 
@@ -22,14 +24,14 @@ from src.workspaces.schema.workspace_model import WorkspaceModel
 from src.workspaces.workspace_service import WorkspaceService
 
 
-@pytest.fixture
-def mock_workspace_service():
+@pytest.fixture(name="mock_workspace_service")
+def fixture_mock_workspace_service():
     """Provides a mocked WorkspaceService."""
     return AsyncMock()
 
 
-@pytest.fixture(autouse=True)
-def override_workspace_service(mock_workspace_service):
+@pytest.fixture(name="override_workspace_service", autouse=True)
+def fixture_override_workspace_service(mock_workspace_service):
     """Overrides the WorkspaceService dependency in the app."""
     app.dependency_overrides[WorkspaceService] = lambda: mock_workspace_service
     yield

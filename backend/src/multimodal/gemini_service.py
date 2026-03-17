@@ -176,7 +176,7 @@ class GeminiService:
             )
             return response
         except Exception as e:
-            logger.error(f"Failed to generate random prompt: {e}")
+            logger.error("Failed to generate random prompt: %s", e)
             raise
 
     def _convert_dto_to_string(self, dto: BaseModel) -> str:
@@ -340,7 +340,9 @@ class GeminiService:
         # Use the provided model_id or fall back to the service's default rewriter model
         target_model = model_id or self.rewriter_model
 
-        logger.info(f"Sending text generation request to model: {target_model}")
+        logger.info(
+            "Sending text generation request to model: %s", target_model
+        )
         try:
             response = self.client.models.generate_content(
                 model=target_model,
@@ -371,7 +373,7 @@ class GeminiService:
             A dictionary containing the extracted brand information.
 
         """
-        logger.info(f"Starting brand info extraction for PDF: {pdf_gcs_uri}")
+        logger.info("Starting brand info extraction for PDF: %s", pdf_gcs_uri)
 
         pdf_file = types.Part.from_uri(
             file_uri=pdf_gcs_uri,
@@ -429,7 +431,7 @@ class GeminiService:
             return BrandGuidelineModel(**partial_results[0])
 
         logger.info(
-            f"Aggregating {len(partial_results)} partial brand info results."
+            "Aggregating %s partial brand info results.", len(partial_results)
         )
 
         # --- Step 1: Deterministic Aggregation in Python ---
@@ -495,6 +497,6 @@ class GeminiService:
             return BrandGuidelineModel(**aggregated_data)
         except Exception as e:
             logger.error(
-                f"Failed to aggregate brand info summaries with Gemini: {e}"
+                "Failed to aggregate brand info summaries with Gemini: %s", e
             )
             return None

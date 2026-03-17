@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Workflow Controller."""
+
 
 from unittest.mock import AsyncMock, MagicMock
 
@@ -24,15 +26,15 @@ from src.workflows.workflow_controller import router
 from src.workflows.workflow_service import WorkflowService
 
 
-@pytest.fixture
-def mock_user():
+@pytest.fixture(name="mock_user")
+def fixture_mock_user():
     return UserModel(
         id=1, email="test@example.com", name="Test User", roles=["user"]
     )
 
 
-@pytest.fixture
-def mock_service():
+@pytest.fixture(name="mock_service")
+def fixture_mock_service():
     service = AsyncMock()
     service.query_workflows = AsyncMock()
     service.create_workflow = AsyncMock()
@@ -47,8 +49,8 @@ def mock_service():
     return service
 
 
-@pytest.fixture
-def client(mock_user, mock_service):
+@pytest.fixture(name="client")
+def fixture_client(mock_user, mock_service):
     app = FastAPI()
     app.include_router(router)
 

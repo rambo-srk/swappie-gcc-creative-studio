@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Media processing and utility functions."""
+
 
 import io
 import json
@@ -20,6 +22,8 @@ import pathlib
 import subprocess
 
 from PIL import Image as PILImage
+
+from google.api_core import exceptions
 
 from src.common.storage_service import GcsService
 
@@ -51,8 +55,8 @@ def generate_image_thumbnail_bytes(
             format_to_save = "PNG" if mime_type == "image/png" else "JPEG"
             img.save(output, format=format_to_save, optimize=True)
             return output.getvalue()
-    except Exception as e:
-        logger.error(f"Error generating image thumbnail: {e}")
+    except (OSError, ValueError) as e:
+        logger.error("Error generating image thumbnail: %s", e)
         return None
 
 
@@ -91,7 +95,8 @@ def generate_image_thumbnail_from_gcs(
         blob_name = parts[3]
 
         path = pathlib.Path(blob_name)
-        # Use simple string manipulation to avoid path issues on different OS if needed, pathlib is generally fine.
+        # Use simple string manipulation to avoid path issues on different OS
+        # if needed, pathlib is generally fine.
         new_blob_name = str(path.parent / f"{path.stem}_thumbnail{path.suffix}")
         if path.parent == pathlib.Path():
             new_blob_name = f"{path.stem}_thumbnail{path.suffix}"
@@ -102,8 +107,8 @@ def generate_image_thumbnail_from_gcs(
             mime_type,
         )
 
-    except Exception as e:
-        logger.error(f"Thumbnail generation failed: {e}")
+    except (OSError, ValueError, exceptions.GoogleAPIError) as e:
+        logger.error("Thumbnail generation failed: %s", e)
         return None
 
 
@@ -145,11 +150,12 @@ def generate_thumbnail(video_path: str) -> str | None:
         return thumbnail_path
     except FileNotFoundError:
         logger.error(
-            "ffmpeg not found. Please ensure ffmpeg is installed and in your PATH.",
+            "ffmpeg not found. Please ensure ffmpeg is installed and in "
+            "your PATH.",
         )
         return None
     except subprocess.CalledProcessError as e:
-        logger.error(f"Error generating thumbnail: {e.stderr}")
+        logger.error("Error generating thumbnail: %s", e.stderr)
         return None
 
 
@@ -157,7 +163,8 @@ def concatenate_videos(video_paths: list[str], output_path: str) -> str | None:
     """Concatenates multiple video files into a single file using ffmpeg.
 
     Args:
-        video_paths: An ordered list of local paths to the video files to be joined.
+        video_paths: An ordered list of local paths to the video files to be
+            joined.
         output_path: The local path for the final concatenated video.
 
     Returns:
@@ -172,7 +179,7 @@ def concatenate_videos(video_paths: list[str], output_path: str) -> str | None:
     list_file_path = os.path.join(
         os.path.dirname(output_path), "concat_list.txt"
     )
-    with open(list_file_path, "w") as f:
+    with open(list_file_path, "w", encoding="utf-8") as f:
         for path in video_paths:
             absolute_path = os.path.abspath(path)
             # ffmpeg requires file paths to be escaped
@@ -194,15 +201,16 @@ def concatenate_videos(video_paths: list[str], output_path: str) -> str | None:
 
     try:
         subprocess.run(command, check=True, capture_output=True, text=True)
-        logger.info(f"Successfully concatenated videos to {output_path}")
+        logger.info("Successfully concatenated videos to %s", output_path)
         return output_path
     except FileNotFoundError:
         logger.error(
-            "ffmpeg not found. Please ensure ffmpeg is installed and in your PATH.",
+            "ffmpeg not found. Please ensure ffmpeg is installed and in "
+            "your PATH.",
         )
         return None
     except subprocess.CalledProcessError as e:
-        logger.error(f"Error concatenating videos: {e.stderr}")
+        logger.error("Error concatenating videos: %s", e.stderr)
         return None
     finally:
         # Clean up the temporary list file

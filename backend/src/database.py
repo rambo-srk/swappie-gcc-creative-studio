@@ -11,8 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Database configuration and session management."""
+
 
 from collections.abc import AsyncGenerator
+import asyncio
+import asyncpg
 
 from google.cloud.sql.connector import Connector, IPTypes
 from sqlalchemy.ext.asyncio import (
@@ -32,7 +36,7 @@ class Base(DeclarativeBase):
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency to get a database session."""
-    async with AsyncSessionLocal() as session:
+    async with async_session_local() as session:
         yield session
 
 
@@ -41,22 +45,32 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 def get_conn_string() -> str:
     """Constructs the database connection string based on the environment."""
-    # If running locally with a direct connection (e.g. docker-compose postgres),
+    # If running locally with a direct connection (e.g. docker-compose
+    # postgres),
     # you might have a different URL.
     # For this setup, we assume we are either connecting to Cloud SQL via
     # the connector (Production/Dev) or a local Postgres instance.
 
     # Check if we are using the Cloud SQL Connector
     if config_service.USE_CLOUD_SQL_AUTH_PROXY:
-        # If using the proxy explicitly, we might just use localhost
-        return f"postgresql+asyncpg://{config_service.DB_USER}:{config_service.DB_PASS}@{config_service.DB_HOST}:{config_service.DB_PORT}/{config_service.DB_NAME}"
+        return (
+            f"postgresql+asyncpg://{config_service.DB_USER}:"
+            f"{config_service.DB_PASS}@"
+            f"{config_service.DB_HOST}:{config_service.DB_PORT}"
+            f"/{config_service.DB_NAME}"
+        )
 
     # Default to using the Python Connector if INSTANCE_CONNECTION_NAME is set
     if config_service.INSTANCE_CONNECTION_NAME:
         return "postgresql+asyncpg://"
 
     # Fallback for local development without Cloud SQL
-    return f"postgresql+asyncpg://{config_service.DB_USER}:{config_service.DB_PASS}@{config_service.DB_HOST}:{config_service.DB_PORT}/{config_service.DB_NAME}"
+    return (
+        f"postgresql+asyncpg://{config_service.DB_USER}:"
+        f"{config_service.DB_PASS}@"
+        f"{config_service.DB_HOST}:{config_service.DB_PORT}"
+        f"/{config_service.DB_NAME}"
+    )
 
 
 class DatabaseConnector:
@@ -73,9 +87,8 @@ class DatabaseConnector:
 
     def get_connector(self) -> Connector:
         if self._connector is None:
-            # Explicitly use the running loop to avoid ConnectorLoopError during asyncio.run()
-            import asyncio
-
+            # Explicitly use the running loop to avoid ConnectorLoopError
+            # during asyncio.run()
             self._connector = Connector(loop=asyncio.get_running_loop())
         return self._connector
 
@@ -88,8 +101,6 @@ class DatabaseConnector:
 async def get_connection():
     """Helper function to get a connection object for the AsyncEngine."""
     if config_service.USE_CLOUD_SQL_AUTH_PROXY:
-        import asyncpg
-
         conn = await asyncpg.connect(
             user=config_service.DB_USER,
             password=config_service.DB_PASS,
@@ -99,11 +110,10 @@ async def get_connection():
         )
         return conn
 
-    # If no instance connection name is provided, assume we are connecting directly to a local DB
-    # (or a DB specified by host/port) without the Cloud SQL Connector.
+    # If no instance connection name is provided, assume we are connecting
+    # directly to a local DB (or a DB specified by host/port) without the
+    # Cloud SQL Connector.
     if not config_service.INSTANCE_CONNECTION_NAME:
-        import asyncpg
-
         conn = await asyncpg.connect(
             user=config_service.DB_USER,
             password=config_service.DB_PASS,
@@ -151,7 +161,7 @@ else:
     )
 
 # Create the Session Factory
-AsyncSessionLocal = async_sessionmaker(
+async_session_local = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
     expire_on_commit=False,
@@ -160,8 +170,9 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 class WorkerDatabase:
-    """Context manager to provide a database session factory for worker threads.
-    Ensures that a fresh Connector and Engine are created for the worker's event loop.
+    """Context manager to provide a database session factory for worker
+    threads. Ensures that a fresh Connector and Engine are created for the
+    worker's event loop.
     """
 
     def __init__(self):
@@ -175,8 +186,6 @@ class WorkerDatabase:
             config_service.INSTANCE_CONNECTION_NAME
             and not config_service.USE_CLOUD_SQL_AUTH_PROXY
         ):
-            import asyncio
-
             # Create a fresh Connector for the current (worker) loop
             self.connector = Connector(loop=asyncio.get_running_loop())
 

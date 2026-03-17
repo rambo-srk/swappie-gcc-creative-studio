@@ -11,19 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Pydantic schemas for workbench."""
+
 
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 
 
 class Clip(BaseModel):
-    assetId: str
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+    )
+
+    asset_id: str
     url: str
-    startTime: float
+    start_time: float
     duration: float
     offset: float
-    trackIndex: int
+    track_index: int
     type: Literal["video", "audio"]
 
 

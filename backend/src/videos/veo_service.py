@@ -861,7 +861,7 @@ class VeoService:
             request_dto=request_dto,
         )
 
-        logger.info(f"Video concatenation job queued: {placeholder_item.id}")
+        logger.info("Video concatenation job queued: %s", placeholder_item.id)
 
         return MediaItemResponse(
             **placeholder_item.model_dump(),

@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Gallery Service."""
+
 
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
@@ -37,8 +39,8 @@ from src.galleries.gallery_service import GalleryService
 from src.users.user_model import UserModel, UserRoleEnum
 
 
-@pytest.fixture
-def service():
+@pytest.fixture(name="service")
+def fixture_service():
     mock_media_repo = AsyncMock()
     mock_source_asset_repo = AsyncMock()
     mock_unified_gallery_repo = AsyncMock()
@@ -56,11 +58,7 @@ def service():
         user_repo=mock_user_repo,
         workspace_repo=mock_workspace_repo,
         iam_signer_credentials=mock_iam_signer,
-        workspace_auth=(
-            workspace_auth
-            if "workspace_auth" in locals()
-            else mock_workspace_auth
-        ),
+        workspace_auth=locals().get("workspace_auth", mock_workspace_auth),
         imagen_service=mock_imagen_service,
         gcs_service=mock_gcs_service,
     )

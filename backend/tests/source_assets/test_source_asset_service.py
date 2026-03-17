@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Source Asset Service."""
+
 
 import io
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -36,8 +38,8 @@ def get_dummy_image_bytes():
     return buf.getvalue()
 
 
-@pytest.fixture
-def mock_dependencies():
+@pytest.fixture(name="mock_dependencies")
+def fixture_mock_dependencies():
     return {
         "repo": AsyncMock(),
         "user_repo": AsyncMock(),
@@ -47,8 +49,8 @@ def mock_dependencies():
     }
 
 
-@pytest.fixture
-def service(mock_dependencies):
+@pytest.fixture(name="service")
+def fixture_service(mock_dependencies):
     return SourceAssetService(
         repo=mock_dependencies["repo"],
         user_repo=mock_dependencies["user_repo"],
@@ -58,8 +60,8 @@ def service(mock_dependencies):
     )
 
 
-@pytest.fixture
-def sample_user():
+@pytest.fixture(name="sample_user")
+def fixture_sample_user():
     return UserModel(
         id=1, email="test@example.com", name="Test User", roles=["user"]
     )

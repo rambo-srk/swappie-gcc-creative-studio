@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Imagen Service."""
+
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -37,8 +39,8 @@ from src.images.imagen_service import (
 from src.users.user_model import UserModel
 
 
-@pytest.fixture
-def mock_media_repo():
+@pytest.fixture(name="mock_media_repo")
+def fixture_mock_media_repo():
     repo = AsyncMock()
     repo.create = AsyncMock()
     repo.get_by_id = AsyncMock()
@@ -46,22 +48,22 @@ def mock_media_repo():
     return repo
 
 
-@pytest.fixture
-def mock_source_asset_repo():
+@pytest.fixture(name="mock_source_asset_repo")
+def fixture_mock_source_asset_repo():
     repo = AsyncMock()
     repo.get_by_id = AsyncMock()
     return repo
 
 
-@pytest.fixture
-def mock_gemini_service():
+@pytest.fixture(name="mock_gemini_service")
+def fixture_mock_gemini_service():
     service = AsyncMock()
     service.enhance_prompt_from_dto = AsyncMock(return_value="Enhanced Prompt")
     return service
 
 
-@pytest.fixture
-def mock_gcs_service():
+@pytest.fixture(name="mock_gcs_service")
+def fixture_mock_gcs_service():
     service = MagicMock()
     service.download_bytes_from_gcs.return_value = b"fake_bytes"
     service.store_to_gcs.return_value = "gs://bucket/uploaded.png"
@@ -70,8 +72,8 @@ def mock_gcs_service():
     return service
 
 
-@pytest.fixture
-def imagen_service(
+@pytest.fixture(name="imagen_service")
+def fixture_imagen_service(
     mock_media_repo,
     mock_source_asset_repo,
     mock_gemini_service,
@@ -86,15 +88,15 @@ def imagen_service(
     )
 
 
-@pytest.fixture
-def sample_user():
+@pytest.fixture(name="sample_user")
+def fixture_sample_user():
     return UserModel(
         id=1, email="test@example.com", name="Test User", roles=["user"]
     )
 
 
-@pytest.fixture
-def sample_create_imagen_dto():
+@pytest.fixture(name="sample_create_imagen_dto")
+def fixture_sample_create_imagen_dto():
     return CreateImagenDto(
         workspace_id=1,
         prompt="A sunset on a beach",
@@ -114,6 +116,7 @@ class TestImagenServiceMethods:
         mock_source_asset_repo,
         sample_user,
     ):
+        _ = mock_source_asset_repo
         # Setup
         placeholder = MediaItemModel(
             id=456,
@@ -441,6 +444,7 @@ def test_process_image_in_background_sync(
     sample_create_imagen_dto,
     sample_user,
 ):
+    _ = (mock_thumb_mu, mock_thumb_is)
 
     # Mock WorkerDatabase Context
     mock_db_context = AsyncMock()
@@ -520,6 +524,7 @@ def test_process_image_in_background_sync_gemini_model(
     sample_create_imagen_dto,
     sample_user,
 ):
+    _ = (mock_thumb_mu, mock_thumb_is)
     from src.common.base_dto import GenerationModelEnum
 
     sample_create_imagen_dto.generation_model = (
@@ -588,6 +593,7 @@ def test_process_image_in_background_sync_with_upscale(
     sample_create_imagen_dto,
     sample_user,
 ):
+    _ = (mock_thumb_mu, mock_thumb_is)
     sample_create_imagen_dto.upscale_factor = "x4"
 
     # Worker database mocks
@@ -663,6 +669,7 @@ def test_process_image_in_background_sync_gemini_image_to_image(
     sample_create_imagen_dto,
     sample_user,
 ):
+    _ = (mock_thumb_mu, mock_thumb_is)
     from src.common.base_dto import GenerationModelEnum
     from src.common.schema.media_item_model import SourceMediaItemLink
 
@@ -768,6 +775,7 @@ def test_process_vto_in_background_sync(
     mock_thumb_is,
     sample_user,
 ):
+    _ = (mock_thumb_mu, mock_thumb_is)
 
     # Mock WorkerDatabase Context
     mock_db_context = AsyncMock()
@@ -851,6 +859,7 @@ def test_process_upload_upscale_in_background_sync(
     mock_thumb_is,
     sample_user,
 ):
+    _ = (mock_thumb_mu, mock_thumb_is)
 
     # Mock WorkerDatabase Context
     mock_db_context = AsyncMock()
@@ -923,6 +932,7 @@ def test_process_upload_upscale_in_background_sync_new_file(
     mock_thumb_is,
     sample_user,
 ):
+    _ = (mock_thumb_mu, mock_thumb_is)
 
     # Mock WorkerDatabase Context
     mock_db_context = AsyncMock()
@@ -992,6 +1002,7 @@ def test_process_vto_in_background_sync_media_item(
     mock_thumb_is,
     sample_user,
 ):
+    _ = (mock_thumb_mu, mock_thumb_is)
 
     # Mock WorkerDatabase Context
     mock_db_context = AsyncMock()
@@ -1082,6 +1093,7 @@ def test_process_image_in_background_sync_edit_image(
     mock_thumb_is,
     sample_user,
 ):
+    _ = (mock_thumb_mu, mock_thumb_is)
 
     # Mock WorkerDatabase Context
     mock_db_context = AsyncMock()

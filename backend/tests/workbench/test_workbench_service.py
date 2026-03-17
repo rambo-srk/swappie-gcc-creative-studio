@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Workbench Service."""
+
 
 import os
 import shutil
@@ -22,8 +24,8 @@ from src.workbench.schemas import Clip, TimelineRequest
 from src.workbench.service import WorkbenchService
 
 
-@pytest.fixture
-def service():
+@pytest.fixture(name="service")
+def fixture_service():
     # Patch storage.Client to avoid DefaultCredentialsError during __init__
     with patch("src.workbench.service.storage.Client") as mock_storage_client:
         mock_gcs_service = AsyncMock()

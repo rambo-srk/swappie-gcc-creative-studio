@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Imagen Controller."""
+
 
 from unittest.mock import AsyncMock, MagicMock
 
@@ -32,15 +34,15 @@ from src.users.user_model import UserModel
 from src.workspaces.workspace_auth_guard import WorkspaceAuth
 
 
-@pytest.fixture
-def mock_user():
+@pytest.fixture(name="mock_user")
+def fixture_mock_user():
     return UserModel(
         id=1, email="test@example.com", name="Test User", roles=["user"]
     )
 
 
-@pytest.fixture
-def mock_service():
+@pytest.fixture(name="mock_service")
+def fixture_mock_service():
     service = AsyncMock()
     service.start_image_generation_job = AsyncMock()
     service.start_vto_generation_job = AsyncMock()
@@ -49,15 +51,15 @@ def mock_service():
     return service
 
 
-@pytest.fixture
-def mock_workspace_auth():
+@pytest.fixture(name="mock_workspace_auth")
+def fixture_mock_workspace_auth():
     auth = AsyncMock()
     auth.authorize = AsyncMock()
     return auth
 
 
-@pytest.fixture
-def client(mock_user, mock_service, mock_workspace_auth):
+@pytest.fixture(name="client")
+def fixture_client(mock_user, mock_service, mock_workspace_auth):
     app = FastAPI()
     app.state.executor = MagicMock()
     app.include_router(router)
@@ -100,6 +102,7 @@ def test_generate_images_success(client, mock_service, mock_workspace_auth):
 
 
 def test_generate_images_vto_success(client, mock_service, mock_workspace_auth):
+    _ = mock_workspace_auth
     mock_response = MediaItemResponse(
         id=222,
         workspace_id=1,
@@ -127,6 +130,7 @@ def test_generate_images_vto_success(client, mock_service, mock_workspace_auth):
 
 
 def test_upload_upscale_success(client, mock_service, mock_workspace_auth):
+    _ = mock_workspace_auth
     mock_response = MediaItemResponse(
         id=333,
         workspace_id=1,

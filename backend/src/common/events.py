@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Event definitions and handling."""
+
 
 import logging
 
@@ -26,7 +28,8 @@ logger = logging.getLogger(__name__)
 
 @event.listens_for(Session, "do_orm_execute")
 def _add_soft_delete_criteria(execute_state):
-    """Event listener to automatically filter out soft-deleted Users and MediaItems."""
+    """Event listener to automatically filter out soft-deleted Users and
+    MediaItems."""
     include_deleted = execute_state.execution_options.get(
         "include_deleted", False
     )

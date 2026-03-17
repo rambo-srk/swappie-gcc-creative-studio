@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Workspace Service."""
+
 
 from unittest.mock import AsyncMock, MagicMock
 
@@ -26,23 +28,25 @@ from src.workspaces.schema.workspace_model import (
 from src.workspaces.workspace_service import WorkspaceService
 
 
-@pytest.fixture
-def mock_workspace_repo():
+@pytest.fixture(name="mock_workspace_repo")
+def fixture_mock_workspace_repo():
     return AsyncMock()
 
 
-@pytest.fixture
-def mock_user_repo():
+@pytest.fixture(name="mock_user_repo")
+def fixture_mock_user_repo():
     return AsyncMock()
 
 
-@pytest.fixture
-def mock_email_service():
+@pytest.fixture(name="mock_email_service")
+def fixture_mock_email_service():
     return MagicMock()  # Synchronous service usually
 
 
-@pytest.fixture
-def workspace_service(mock_workspace_repo, mock_user_repo, mock_email_service):
+@pytest.fixture(name="workspace_service")
+def fixture_workspace_service(
+    mock_workspace_repo, mock_user_repo, mock_email_service
+):
     return WorkspaceService(
         workspace_repo=mock_workspace_repo,
         user_repo=mock_user_repo,

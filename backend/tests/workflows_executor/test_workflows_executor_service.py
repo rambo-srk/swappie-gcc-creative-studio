@@ -25,8 +25,8 @@ from src.workflows_executor.workflows_executor_service import (
 )
 
 
-@pytest.fixture
-def service():
+@pytest.fixture(name="service")
+def fixture_service():
     with (
         patch(
             "src.workflows_executor.workflows_executor_service.RestClient",

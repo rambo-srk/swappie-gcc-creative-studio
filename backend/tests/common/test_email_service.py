@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Email Service."""
+
 
 from unittest.mock import MagicMock, patch
 
@@ -21,8 +23,8 @@ from src.common.email_service import EmailService
 from src.config.config_service import config_service
 
 
-@pytest.fixture
-def email_service():
+@pytest.fixture(name="email_service")
+def fixture_email_service():
     # Use patch to ensure SENDER_EMAIL is available during initialization
     with (
         patch.object(

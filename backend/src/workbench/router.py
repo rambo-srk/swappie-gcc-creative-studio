@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""API endpoints for workbench."""
+
 
 import logging
 import shutil
@@ -33,9 +35,9 @@ logger = logging.getLogger(__name__)
 def cleanup_temp_dir(path: str):
     try:
         shutil.rmtree(path)
-        logger.info(f"Cleaned up temp dir: {path}")
+        logger.info("Cleaned up temp dir: %s", path)
     except Exception as e:
-        logger.error(f"Failed to cleanup temp dir {path}: {e}")
+        logger.error("Failed to cleanup temp dir %s: %s", path, e)
 
 
 @router.post("/render")

@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Storage Service."""
+
 
 from unittest.mock import MagicMock, patch
 
@@ -20,8 +22,8 @@ from google.api_core import exceptions
 from src.common.storage_service import GcsService
 
 
-@pytest.fixture
-def gcs_service():
+@pytest.fixture(name="gcs_service")
+def fixture_gcs_service():
     with patch("src.common.storage_service.storage.Client") as mock_client_cls:
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client

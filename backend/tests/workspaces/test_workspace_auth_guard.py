@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for Workspace Auth Guard."""
+
 
 from unittest.mock import AsyncMock
 
@@ -24,13 +26,13 @@ from src.workspaces.schema.workspace_model import (
 from src.workspaces.workspace_auth_guard import WorkspaceAuth
 
 
-@pytest.fixture
-def mock_workspace_repo_auth():
+@pytest.fixture(name="mock_workspace_repo_auth")
+def fixture_mock_workspace_repo_auth():
     return AsyncMock()
 
 
-@pytest.fixture
-def workspace_auth(mock_workspace_repo_auth):
+@pytest.fixture(name="workspace_auth")
+def fixture_workspace_auth(mock_workspace_repo_auth):
     return WorkspaceAuth(workspace_repo=mock_workspace_repo_auth)
 
 

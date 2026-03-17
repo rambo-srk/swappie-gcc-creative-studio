@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Base repository class for database operations."""
+
 
 import datetime
 from typing import Any, Generic, TypeVar
@@ -21,17 +23,17 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Define generic types for SQLAlchemy Model and Pydantic Schema
-ModelType = TypeVar("ModelType", bound=Any)
-SchemaType = TypeVar("SchemaType", bound=BaseModel)
-IDType = TypeVar("IDType", bound=int | str)
+ModelT = TypeVar("ModelT", bound=Any)
+SchemaT = TypeVar("SchemaT", bound=BaseModel)
+IdT = TypeVar("IdT", bound=int | str)
 
 
-class BaseDocumentMixin(BaseModel, Generic[IDType]):
+class BaseDocumentMixin(BaseModel, Generic[IdT]):
     """Base Pydantic model for all schemas.
-    Now generic over IDType to enforce strict int or str IDs.
+    Now generic over IdT to enforce strict int or str IDs.
     """
 
-    id: IDType
+    id: IdT
     created_at: datetime.datetime = Field(
         default_factory=lambda: datetime.datetime.now(datetime.UTC),
     )
@@ -41,7 +43,8 @@ class BaseDocumentMixin(BaseModel, Generic[IDType]):
 
     # Pydantic v2 configuration for this sub-model
     model_config = ConfigDict(
-        use_enum_values=True,  # Allows passing enum members like StyleEnum.MODERN
+        # Allows passing enum members like StyleEnum.MODERN
+        use_enum_values=True,
         extra="ignore",  # Prevents accidental extra fields
         populate_by_name=True,
         from_attributes=True,
@@ -59,15 +62,15 @@ class BaseStringDocument(BaseDocumentMixin[str]):
     pass
 
 
-class BaseRepositoryMixin(Generic[ModelType, SchemaType, IDType]):
+class BaseRepositoryMixin(Generic[ModelT, SchemaT, IdT]):
     """A generic repository mixin for common SQLAlchemy operations.
-    Generic over IDType to enforce strict types.
+    Generic over IdT to enforce strict types.
     """
 
     def __init__(
         self,
-        model: type[ModelType],
-        schema: type[SchemaType],
+        model: type[ModelT],
+        schema: type[SchemaT],
         db: AsyncSession,
     ):
         self.model = model
@@ -76,10 +79,11 @@ class BaseRepositoryMixin(Generic[ModelType, SchemaType, IDType]):
 
     async def get_by_id(
         self,
-        item_id: IDType,
+        item_id: IdT,
         include_deleted: bool = False,
-    ) -> SchemaType | None:
-        """Retrieves a single document by its ID, excluding soft-deleted ones."""
+    ) -> SchemaT | None:
+        """Retrieves a single document by its ID, excluding soft-deleted
+        ones."""
         query = (
             select(self.model)
             .where(self.model.id == item_id)
@@ -92,7 +96,7 @@ class BaseRepositoryMixin(Generic[ModelType, SchemaType, IDType]):
             return None
         return self.schema.model_validate(item)
 
-    async def create(self, schema: BaseModel | dict[str, Any]) -> SchemaType:
+    async def create(self, schema: BaseModel | dict[str, Any]) -> SchemaT:
         """Creates a new record in the database."""
         # Convert Pydantic schema to SQLAlchemy model
         if isinstance(schema, BaseModel):
@@ -100,7 +104,8 @@ class BaseRepositoryMixin(Generic[ModelType, SchemaType, IDType]):
         else:
             data = schema.copy()
 
-        # We exclude 'id' if it's None so the DB can auto-increment it (for Int IDs)
+        # We exclude 'id' if it's None so the DB can auto-increment it
+        # (for Int IDs)
         if data.get("id") is None:
             data.pop("id", None)
 
@@ -112,9 +117,9 @@ class BaseRepositoryMixin(Generic[ModelType, SchemaType, IDType]):
 
     async def update(
         self,
-        item_id: IDType,
+        item_id: IdT,
         update_data: BaseModel | dict[str, Any],
-    ) -> SchemaType | None:
+    ) -> SchemaT | None:
         """Performs a partial update on a document."""
         # Fetch the item first
         query = select(self.model).where(self.model.id == item_id)
@@ -142,7 +147,7 @@ class BaseRepositoryMixin(Generic[ModelType, SchemaType, IDType]):
         await self.db.refresh(db_item)
         return self.schema.model_validate(db_item)
 
-    async def delete(self, item_id: IDType) -> bool:
+    async def delete(self, item_id: IdT) -> bool:
         """Deletes a document by its ID (HARD DELETE).
         Returns True if deletion was successful (item existed), False otherwise.
         """
@@ -155,7 +160,7 @@ class BaseRepositoryMixin(Generic[ModelType, SchemaType, IDType]):
 
     async def soft_delete(
         self,
-        item_id: IDType,
+        item_id: IdT,
         deleted_by: int | None = None,
     ) -> bool:
         """Soft deletes a document by setting its `deleted_at` timestamp.
@@ -176,8 +181,9 @@ class BaseRepositoryMixin(Generic[ModelType, SchemaType, IDType]):
         await self.db.commit()
         return True
 
-    async def restore(self, item_id: IDType) -> bool:
-        """Soft restores a document by setting its `deleted_at` timestamp back to None.
+    async def restore(self, item_id: IdT) -> bool:
+        """Soft restores a document by setting its `deleted_at` timestamp
+        back to None.
         Returns True if successful, False if item not found.
         """
         query = (
@@ -204,7 +210,7 @@ class BaseRepositoryMixin(Generic[ModelType, SchemaType, IDType]):
         limit: int = 100,
         offset: int = 0,
         include_deleted: bool = False,
-    ) -> list[SchemaType]:
+    ) -> list[SchemaT]:
         """Finds all documents with pagination, excluding soft-deleted ones."""
         query = select(self.model).execution_options(
             include_deleted=include_deleted
@@ -215,10 +221,10 @@ class BaseRepositoryMixin(Generic[ModelType, SchemaType, IDType]):
 
 
 # BaseRepository defaults to int IDs
-class BaseRepository(BaseRepositoryMixin[ModelType, SchemaType, int]):
+class BaseRepository(BaseRepositoryMixin[ModelT, SchemaT, int]):
     pass
 
 
 # BaseStringRepository requires String IDs (e.g. UUIDs)
-class BaseStringRepository(BaseRepositoryMixin[ModelType, SchemaType, str]):
+class BaseStringRepository(BaseRepositoryMixin[ModelT, SchemaT, str]):
     pass
