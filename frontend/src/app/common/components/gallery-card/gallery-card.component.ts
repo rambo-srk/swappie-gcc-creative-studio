@@ -167,6 +167,11 @@ export class GalleryCardComponent implements OnDestroy {
     event.preventDefault();
     event.stopPropagation();
 
+    if (this.anyItemSelected) {
+      this.selectionToggled.emit(this.item);
+      return;
+    }
+
     const route =
       this.item.itemType === 'source_asset'
         ? ['/asset-detail', this.item.id]
