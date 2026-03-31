@@ -27,6 +27,10 @@ import {Router} from '@angular/router';
 import {isPlatformBrowser} from '@angular/common';
 import {GalleryItem} from '../../models/gallery-item.model';
 import {MediaItemSelection} from '../image-selector/image-selector.component';
+import {UserService} from '../../services/user.service';
+import {MatDialog} from '@angular/material/dialog';
+import {UserRolesEnum} from '../../models/user.model';
+import {AssignTagsDialogComponent} from '../assign-tags-dialog/assign-tags-dialog.component';
 import {MediaItem} from '../../models/media-item.model';
 
 @Component({
@@ -35,10 +39,17 @@ import {MediaItem} from '../../models/media-item.model';
   styleUrls: ['./gallery-card.component.scss'],
 })
 export class GalleryCardComponent implements OnDestroy {
+  isAdmin = false;
+
   constructor(
     private router: Router,
+    private userService: UserService,
+    public dialog: MatDialog,
     @Inject(PLATFORM_ID) private platformId: Object,
-  ) {}
+  ) {
+    const userDetails = this.userService.getUserDetails();
+    this.isAdmin = userDetails?.roles?.includes(UserRolesEnum.ADMIN) || false;
+  }
   @Input() item!: GalleryItem;
   @Input() isSelectionMode = false;
   @Input() isSelected = false;
@@ -103,6 +114,29 @@ export class GalleryCardComponent implements OnDestroy {
     } else {
       return '100%'; // 1:1
     }
+  }
+
+  openAssignTagsDialog(event: Event): void {
+    event.stopPropagation();
+    event.preventDefault();
+
+    const dialogRef = this.dialog.open(AssignTagsDialogComponent, {
+      data: {
+        assetId: this.item.id,
+        assetType: this.item.itemType,
+        existingTags: this.item.metadata?.tags || [],
+      },
+      width: '400px',
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        if (!this.item.metadata) {
+          this.item.metadata = {};
+        }
+        this.item.metadata.tags = result;
+      }
+    });
   }
 
   ngOnDestroy() {}

@@ -111,6 +111,12 @@ class UnifiedGalleryRepository(
                 < search_dto.end_date + datetime.timedelta(days=1)
             )
 
+        # 4.5 Tags Filter
+        if hasattr(search_dto, "tags") and search_dto.tags:
+            query = query.where(
+                self.model.metadata_["tags"].contains(search_dto.tags)
+            )
+
         # 5. Full-Text Word Search
         if hasattr(search_dto, "query") and search_dto.query:
             search_pattern = f"%{search_dto.query}%"

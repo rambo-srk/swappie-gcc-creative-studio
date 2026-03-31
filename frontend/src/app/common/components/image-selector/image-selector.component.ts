@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import {Component, Inject, ViewChild} from '@angular/core';
+import {Component, Inject, OnInit, ViewChild} from '@angular/core';
 import {
   MAT_DIALOG_DATA,
   MatDialog,
   MatDialogRef,
 } from '@angular/material/dialog';
 import {finalize, Observable} from 'rxjs';
+import {UserService} from '../../services/user.service';
 import {
   SourceAssetResponseDto,
   SourceAssetService,
@@ -40,11 +41,12 @@ export interface MediaItemSelection {
   templateUrl: './image-selector.component.html',
   styleUrls: ['./image-selector.component.scss'],
 })
-export class ImageSelectorComponent {
+export class ImageSelectorComponent implements OnInit {
   isUploading = false;
   isDragging = false;
   selectedMediaItems = new Map<string, any>();
   shouldCrop = false;
+  currentUserEmail: string | null = null;
 
   @ViewChild(MediaGalleryComponent) mediaGallery!: MediaGalleryComponent;
 
@@ -52,6 +54,7 @@ export class ImageSelectorComponent {
     public dialogRef: MatDialogRef<ImageSelectorComponent>,
     private sourceAssetService: SourceAssetService,
     private dialog: MatDialog,
+    private userService: UserService,
     @Inject(MAT_DIALOG_DATA)
     public data: {
       mimeType:
@@ -70,6 +73,11 @@ export class ImageSelectorComponent {
     },
   ) {
     this.dialogRef.addPanelClass('image-selector-dialog');
+  }
+
+  ngOnInit(): void {
+    const userDetails = this.userService.getUserDetails();
+    this.currentUserEmail = userDetails?.email || null;
   }
 
   // This method is called by the file input or drop event inside this component

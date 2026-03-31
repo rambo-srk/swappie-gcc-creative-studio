@@ -27,11 +27,13 @@ import {MatMenuModule} from '@angular/material/menu';
 import {MatSelectModule} from '@angular/material/select';
 import {MatSnackBarModule} from '@angular/material/snack-bar';
 import {MatTooltipModule} from '@angular/material/tooltip';
+import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatDividerModule} from '@angular/material/divider';
 import {MatDatepickerModule} from '@angular/material/datepicker';
 import {MatNativeDateModule} from '@angular/material/core';
 
 import {MatSliderModule} from '@angular/material/slider';
+import {MatChipsModule} from '@angular/material/chips';
 
 import {CreateWorkspaceModalComponent} from './components/create-workspace-modal/create-workspace-modal.component';
 import {ConfirmationDialogComponent} from './components/confirmation-dialog/confirmation-dialog.component';
@@ -83,8 +85,10 @@ const MODULES = [
   MatInputModule,
   MatMenuModule,
   MatSelectModule,
+  MatCheckboxModule,
   MatSliderModule,
   MatSnackBarModule,
+  MatChipsModule,
   MatTooltipModule,
   MatProgressSpinnerModule,
   MatDatepickerModule,
@@ -105,7 +109,9 @@ const EXPORTED_MODULES = [
   MatInputModule,
   MatMenuModule,
   MatSelectModule,
+  MatCheckboxModule,
   MatSliderModule,
+  MatChipsModule,
   MatSnackBarModule,
   MatDatepickerModule,
   MatNativeDateModule,

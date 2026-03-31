@@ -62,14 +62,29 @@
       </div>
     </div>
 
-    <app-media-gallery
-      [isSelectorMode]="true"
-      [isSelectionMode]="true"
-      [filterByType]="data.mimeType"
-      [maxSelection]="data.maxSelection ?? null"
-      (mediaItemSelected)="onMediaItemSelected($event)"
-      (mediaSelected)="onMediaSelected($event)"
-    ></app-media-gallery>
+    <mat-tab-group>
+      <mat-tab label="All Assets">
+        <app-media-gallery
+          [isSelectorMode]="true"
+          [isSelectionMode]="true"
+          [filterByType]="data.mimeType"
+          [maxSelection]="data.maxSelection ?? null"
+          (mediaItemSelected)="onMediaItemSelected($event)"
+          (mediaSelected)="onMediaSelected($event)"
+        ></app-media-gallery>
+      </mat-tab>
+      <mat-tab label="My Uploaded Assets">
+        <app-media-gallery
+          [isSelectorMode]="true"
+          [isSelectionMode]="true"
+          [filterByType]="data.mimeType"
+          [filterByUserEmail]="currentUserEmail"
+          [maxSelection]="data.maxSelection ?? null"
+          (mediaItemSelected)="onMediaItemSelected($event)"
+          (mediaSelected)="onMediaSelected($event)"
+        ></app-media-gallery>
+      </mat-tab>
+    </mat-tab-group>
   </div>
 
   <div class="selector-footer" *ngIf="data.multiSelect || data.showFooter">

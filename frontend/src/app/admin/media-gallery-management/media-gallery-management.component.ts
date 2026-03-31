@@ -24,6 +24,8 @@ import {MatSnackBar} from '@angular/material/snack-bar';
 import {firstValueFrom} from 'rxjs';
 import {GalleryService} from '../../gallery/gallery.service';
 import {GalleryItem} from '../../common/models/gallery-item.model';
+import {TagsService} from '../../common/services/tags.service';
+import {WorkspaceStateService} from '../../services/workspace/workspace-state.service';
 import {GallerySearchDto} from '../../common/models/search.model';
 import {
   handleErrorSnackbar,
@@ -62,6 +64,8 @@ export class MediaGalleryManagementComponent implements OnInit {
   filterStartDate: Date | null = null;
   filterEndDate: Date | null = null;
   includeDeleted = false;
+  filterTags: string[] = [];
+  tagOptions: {value: string; label: string}[] = [];
 
   generationModels = MODEL_CONFIGS.map(config => ({
     value: config.value,
@@ -80,6 +84,8 @@ export class MediaGalleryManagementComponent implements OnInit {
 
   constructor(
     private galleryService: GalleryService,
+    private tagsService: TagsService,
+    private workspaceStateService: WorkspaceStateService,
     private snackBar: MatSnackBar,
     private router: Router,
     private dialog: MatDialog,
@@ -90,6 +96,19 @@ export class MediaGalleryManagementComponent implements OnInit {
       {value: '', label: 'All Models'},
       ...this.generationModels.map(m => ({value: m.value, label: m.viewValue})),
     ];
+
+    const workspaceId = this.workspaceStateService.getActiveWorkspaceId();
+    if (workspaceId) {
+      this.tagsService.getTags(workspaceId).subscribe({
+        next: tags => {
+          this.tagOptions = tags.map(tag => ({
+            value: tag.name,
+            label: tag.name,
+          }));
+        },
+        error: err => console.error('Failed to load tags', err),
+      });
+    }
 
     if (isPlatformBrowser(this.platformId)) {
       void this.fetchPage(0);
@@ -126,6 +145,9 @@ export class MediaGalleryManagementComponent implements OnInit {
     }
     if (this.filterEndDate) {
       filters.endDate = this.filterEndDate.toISOString();
+    }
+    if (this.filterTags.length > 0) {
+      filters.tags = this.filterTags;
     }
 
     try {

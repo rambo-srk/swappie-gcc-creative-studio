@@ -71,6 +71,7 @@ export interface BaseGalleryItem {
 }
 
 export interface MediaItemMetadata {
+  tags?: string[];
   model?: string;
   style?: string;
   prompt?: string;
@@ -98,6 +99,7 @@ export interface MediaItemMetadata {
 }
 
 export interface SourceAssetMetadata {
+  tags?: string[];
   isAudio?: boolean;
   isVideo?: boolean;
   mimeType?: string;

@@ -113,6 +113,40 @@
           ></studio-dropdown>
         </div>
 
+        <!-- Asset Type Filter -->
+        <div class="flex flex-col w-48">
+          <studio-dropdown
+             class="w-full"
+             size="small"
+            [options]="assetTypeOptions"
+            [(value)]="assetTypeFilter"
+            (valueChange)="searchTerm()"
+            placeholder="Asset Type"
+            menuTitle="Asset Type"
+          ></studio-dropdown>
+        </div>
+
+        <!-- Tags Filter -->
+        <div class="flex items-center gap-2 w-56">
+          <studio-dropdown
+             class="flex-1"
+             size="small"
+            [options]="tagOptions"
+            [(value)]="tagsFilter"
+            [multiple]="true"
+            [searchable]="true"
+            [deletable]="true"
+            (valueChange)="onTagChange($event)"
+            (searchChange)="onTagSearch($event)"
+            (optionDeleted)="onTagDelete($event)"
+            placeholder="Tags"
+            menuTitle="Tags"
+          ></studio-dropdown>
+          <button mat-icon-button (click)="openTagsManagement()" title="Manage Tags" *ngIf="isAdmin" class="settings-btn">
+            <mat-icon>settings</mat-icon>
+          </button>
+        </div>
+
         <!-- Search Filter -->
         <div class="flex flex-col self-center">
           <studio-search-filter
@@ -166,6 +200,16 @@
             mode="indeterminate"
             diameter="18"
           ></mat-progress-spinner>
+        </studio-button>
+        <studio-button
+          variant="primary"
+          size="small"
+          shape="circle"
+          (click)="openBulkAssignTagsDialog()"
+          title="Tag selected"
+          [disabled]="selectedItems.size === 0 || isCopying || isDownloading || isDeleting"
+        >
+          <mat-icon>label</mat-icon>
         </studio-button>
         <studio-button
           variant="primary"

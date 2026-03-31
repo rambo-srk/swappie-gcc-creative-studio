@@ -1,0 +1,50 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <h2>Manage Tags</h2>
+    <button mat-icon-button (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="dialog-content">
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <div *ngIf="!isLoading" class="tags-list">
+      <div *ngFor="let tag of tags" class="tag-item">
+        <!-- View Mode -->
+        <ng-container *ngIf="editingTagId !== tag.id">
+          <div class="tag-color" [style.backgroundColor]="tag.color || '#E8EAED'"></div>
+          <span class="tag-name">{{ tag.name }}</span>
+          <div class="tag-actions">
+            <button mat-icon-button (click)="startEdit(tag)" title="Edit">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button (click)="deleteTag(tag)" title="Delete" class="delete-btn">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </ng-container>
+
+        <!-- Edit Mode -->
+        <ng-container *ngIf="editingTagId === tag.id">
+          <input type="color" [(ngModel)]="editColor" class="color-input">
+          <input type="text" [(ngModel)]="editName" class="name-input" placeholder="Tag name">
+          <div class="edit-actions">
+            <button mat-icon-button (click)="saveEdit(tag)" title="Save" class="save-btn">
+              <mat-icon>check</mat-icon>
+            </button>
+            <button mat-icon-button (click)="cancelEdit()" title="Cancel">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </ng-container>
+      </div>
+
+      <div *ngIf="tags.length === 0" class="no-tags">
+        No tags found in this workspace.
+      </div>
+    </div>
+  </div>
+</div>

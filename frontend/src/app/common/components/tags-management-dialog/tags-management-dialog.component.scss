@@ -1,0 +1,95 @@
+.dialog-container {
+  padding: 16px;
+}
+
+.tags-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tag-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+
+  .tag-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .tag-name {
+    flex: 1;
+    font-size: 14px;
+    color: white;
+  }
+
+  .tag-actions {
+    display: flex;
+    gap: 4px;
+
+    button {
+      color: rgba(255, 255, 255, 0.5);
+
+      &:hover {
+        color: white;
+      }
+
+      &.delete-btn:hover {
+        color: #f28b82; // Light red
+      }
+    }
+  }
+
+  .color-input {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .name-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: white;
+    padding: 6px 8px;
+    font-size: 14px;
+    outline: none;
+
+    &:focus {
+      border-color: #a8c7fa;
+    }
+  }
+
+  .edit-actions {
+    display: flex;
+    gap: 4px;
+
+    button {
+      color: rgba(255, 255, 255, 0.5);
+
+      &.save-btn:hover {
+        color: #81c995; // Light green
+      }
+
+      &:hover {
+        color: white;
+      }
+    }
+  }
+}
+
+.no-tags {
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  padding: 16px;
+}

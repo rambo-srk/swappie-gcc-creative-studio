@@ -28,6 +28,7 @@ import {trigger, state, style, transition, animate} from '@angular/animations';
 export interface DropdownOption {
   value: any;
   label: string;
+  color?: string;
   icon?: string;
   isSvgIcon?: boolean;
 }
@@ -70,10 +71,27 @@ export class StudioDropdownComponent {
   @Input() isSvgIcon = false;
   @Input() menuTitle = ''; // Title shown inside the dropdown menu
   @Input() size: 'small' | 'medium' | 'large' | 'default' = 'default';
+  @Input() multiple = false;
+  @Input() deletable = false;
+  @Input() searchable = false;
 
   @Output() valueChange = new EventEmitter<any>();
+  @Output() optionDeleted = new EventEmitter<DropdownOption>();
+  @Output() searchChange = new EventEmitter<string>();
 
   isOpen = false;
+  searchQuery = '';
+
+  onSearchInput(event: Event) {
+    const target = event.target as HTMLInputElement;
+    this.searchQuery = target.value;
+    this.searchChange.emit(this.searchQuery);
+  }
+
+  onDeleteOption(option: DropdownOption, event: Event) {
+    event.stopPropagation();
+    this.optionDeleted.emit(option);
+  }
 
   @HostBinding('class') get hostClasses() {
     return `size-${this.size}`;
@@ -89,6 +107,13 @@ export class StudioDropdownComponent {
   }
 
   get selectedLabel(): string {
+    if (this.multiple && Array.isArray(this.value)) {
+      if (this.value.length === 0) return this.placeholder;
+      const selectedLabels = this.options
+        .filter(opt => this.value.includes(opt.value))
+        .map(opt => opt.label);
+      return selectedLabels.join(', ');
+    }
     const selected = this.options.find(opt => opt.value === this.value);
     return selected ? selected.label : this.placeholder;
   }
@@ -99,8 +124,21 @@ export class StudioDropdownComponent {
   }
 
   selectOption(option: DropdownOption) {
-    this.value = option.value;
-    this.valueChange.emit(this.value);
-    this.isOpen = false;
+    if (this.multiple) {
+      if (!Array.isArray(this.value)) {
+        this.value = [];
+      }
+      const index = this.value.indexOf(option.value);
+      if (index > -1) {
+        this.value.splice(index, 1);
+      } else {
+        this.value.push(option.value);
+      }
+      this.valueChange.emit([...this.value]); // Emit a new array reference
+    } else {
+      this.value = option.value;
+      this.valueChange.emit(this.value);
+      this.isOpen = false;
+    }
   }
 }

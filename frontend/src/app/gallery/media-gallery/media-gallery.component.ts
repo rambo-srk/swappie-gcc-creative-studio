@@ -35,8 +35,8 @@ import {MatDialog} from '@angular/material/dialog';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {MatIconRegistry} from '@angular/material/icon';
 import {DomSanitizer, SafeResourceUrl} from '@angular/platform-browser';
-import {Subscription, fromEvent} from 'rxjs';
-import {debounceTime} from 'rxjs/operators';
+import {Subscription, fromEvent, forkJoin, of} from 'rxjs';
+import {debounceTime, map, switchMap} from 'rxjs/operators';
 import {MediaItemSelection} from '../../common/components/image-selector/image-selector.component';
 import {CopyToWorkspaceDialogComponent} from '../../common/components/copy-to-workspace-dialog/copy-to-workspace-dialog.component';
 import {DropdownOption} from '../../common/components/studio-dropdown/studio-dropdown.component';
@@ -47,6 +47,11 @@ import {GallerySearchDto} from '../../common/models/search.model';
 import {UserService} from '../../common/services/user.service';
 import {GalleryService} from '../gallery.service';
 import {WorkspaceStateService} from '../../services/workspace/workspace-state.service';
+import {TagsService, TagModel} from '../../common/services/tags.service';
+import {AssignTagsDialogComponent} from '../../common/components/assign-tags-dialog/assign-tags-dialog.component';
+import {UserRolesEnum} from '../../common/models/user.model';
+import {TagsManagementDialogComponent} from '../../common/components/tags-management-dialog/tags-management-dialog.component';
+import {ConfirmationDialogComponent} from '../../common/components/confirmation-dialog/confirmation-dialog.component';
 
 @Component({
   selector: 'app-media-gallery',
@@ -69,6 +74,7 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input() isSelectionMode = false;
   @Input() isSelectorMode = false;
   @Input() maxSelection: number | null = null;
+  @Input() filterByUserEmail: string | null = null;
   @Output() mediaSelected = new EventEmitter<GalleryItem>();
 
   images: GalleryItem[] = [];
@@ -96,6 +102,16 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
   public queryFilter = '';
   public startDateFilter: Date | null = null;
   public endDateFilter: Date | null = null;
+  public assetTypeFilter = '';
+  public isAdmin = false;
+  public tagsFilter: string[] = [];
+  public assetTypeOptions: DropdownOption[] = [
+    {value: '', label: 'All Assets'},
+    {value: 'media_item', label: 'Generated Media'},
+    {value: 'source_asset', label: 'Uploaded Assets'},
+  ];
+  public tagOptions: DropdownOption[] = [];
+  public availableTags: TagModel[] = [];
   public generationModels = MODEL_CONFIGS.map(config => ({
     value: config.value,
     viewValue: config.viewValue.replace('\n', ''), // Remove newlines for dropdown
@@ -129,6 +145,7 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
     private workspaceStateService: WorkspaceStateService,
     private snackBar: MatSnackBar,
     public dialog: MatDialog,
+    private tagsService: TagsService,
     @Inject(PLATFORM_ID) platformId: Object,
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -150,6 +167,9 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit(): void {
+    const userDetails = this.userService.getUserDetails();
+    this.isAdmin = userDetails?.roles?.includes(UserRolesEnum.ADMIN) || false;
+
     this.mediaTypeFilter = this.filterByType || '';
     this.searchTerm(); // Set initial filters
     this.loadingSubscription = this.galleryService.isLoading$.subscribe(
@@ -184,7 +204,61 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.isBrowser) {
       this.searchTerm();
       this.showFeaturesHint();
+      this.loadTags();
     }
+  }
+
+  private loadTags(search?: string): void {
+    const workspaceId = this.workspaceStateService.getActiveWorkspaceId();
+    if (workspaceId) {
+      this.tagsService.getTags(workspaceId, search).subscribe(tags => {
+        if (Array.isArray(tags)) {
+          this.availableTags = tags;
+          this.tagOptions = [
+            {value: '', label: 'All Tags'},
+            ...tags.map(t => ({value: t.name, label: t.name, color: t.color})),
+          ];
+        }
+      });
+    }
+  }
+
+  onTagSearch(search: string): void {
+    this.loadTags(search);
+  }
+
+  onTagDelete(option: DropdownOption): void {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      data: {
+        title: 'Delete Tag',
+        message: `Are you sure you want to delete tag "${option.label}"? This action cannot be undone.`,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        const workspaceId = this.workspaceStateService.getActiveWorkspaceId();
+        const tag = this.availableTags.find(t => t.name === option.value);
+        if (workspaceId && tag) {
+          this.tagsService.deleteTag(workspaceId, tag.id).subscribe(() => {
+            this.snackBar.open(`Tag "${option.label}" deleted.`, 'Close', {
+              duration: 3000,
+            });
+            this.loadTags(); // Reload
+          });
+        }
+      }
+    });
+  }
+
+  openTagsManagement(): void {
+    const dialogRef = this.dialog.open(TagsManagementDialogComponent, {
+      width: '400px',
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      this.loadTags(); // Reload tags after management!
+    });
   }
 
   ngAfterViewInit(): void {
@@ -398,6 +472,95 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
+  openBulkAssignTagsDialog(): void {
+    if (this.selectedItems.size === 0) return;
+
+    const dialogRef = this.dialog.open(AssignTagsDialogComponent, {
+      width: '400px',
+      data: {
+        assetId: 0,
+        assetType: '',
+        existingTags: [],
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((selectedTags: string[]) => {
+      if (selectedTags && selectedTags.length > 0) {
+        this.performBulkTag(selectedTags);
+      }
+    });
+  }
+
+  private performBulkTag(selectedTags: string[]): void {
+    const workspaceId = this.workspaceStateService.getActiveWorkspaceId();
+    if (!workspaceId) return;
+
+    const selected = Array.from(this.selectedItems);
+    const mediaItemIds = selected
+      .filter(id => id.startsWith('media_item:'))
+      .map(id => parseInt(id.split(':')[1]));
+    const sourceAssetIds = selected
+      .filter(id => id.startsWith('source_asset:'))
+      .map(id => parseInt(id.split(':')[1]));
+
+    const missingTags = selectedTags.filter(
+      name => !this.availableTags.some(t => t.name === name),
+    );
+
+    const createObservables = missingTags.map(name =>
+      this.tagsService.createTag(workspaceId, name),
+    );
+
+    const afterTagsResolved = () => {
+      const tagIds = selectedTags
+        .map(name => {
+          const tag = this.availableTags.find(t => t.name === name);
+          return tag ? tag.id : null;
+        })
+        .filter(id => id !== null) as number[];
+
+      if (mediaItemIds.length > 0 && tagIds.length > 0) {
+        this.tagsService
+          .bulkAssign(workspaceId, mediaItemIds, 'media_item', tagIds)
+          .subscribe({
+            next: () => {
+              this.snackBar.open('Tags assigned to generated media', 'Close', {
+                duration: 3000,
+              });
+              this.searchTerm();
+            },
+            error: err => console.error('Error assigning tags:', err),
+          });
+      }
+
+      if (sourceAssetIds.length > 0 && tagIds.length > 0) {
+        this.tagsService
+          .bulkAssign(workspaceId, sourceAssetIds, 'source_asset', tagIds)
+          .subscribe({
+            next: () => {
+              this.snackBar.open('Tags assigned to uploaded assets', 'Close', {
+                duration: 3000,
+              });
+              this.searchTerm();
+            },
+            error: err => console.error('Error assigning tags:', err),
+          });
+      }
+
+      this.selectedItems.clear();
+      this.lastSelectedIndex = null;
+    };
+
+    if (createObservables.length > 0) {
+      forkJoin(createObservables).subscribe(newTags => {
+        this.availableTags.push(...newTags);
+        afterTagsResolved();
+      });
+    } else {
+      afterTagsResolved();
+    }
+  }
+
   private updateGroups(): void {
     // 1. Group images
     const groupsMap = new Map<string, GalleryItem[]>();
@@ -549,6 +712,9 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.startDateFilter) {
       filters['startDate'] = this.startDateFilter.toISOString();
     }
+    if (this.filterByUserEmail) {
+      filters['userEmail'] = this.filterByUserEmail;
+    }
     if (this.endDateFilter) {
       filters['endDate'] = this.endDateFilter.toISOString();
     }
@@ -568,6 +734,17 @@ export class MediaGalleryComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.statusFilter) {
       filters['status'] = this.statusFilter;
     }
+    if (this.assetTypeFilter) {
+      filters['itemType'] = this.assetTypeFilter;
+    }
+    if (this.tagsFilter.length > 0) {
+      filters['tags'] = this.tagsFilter;
+    }
     this.galleryService.setFilters(filters);
+  }
+
+  public onTagChange(tags: string[]): void {
+    this.tagsFilter = tags;
+    this.searchTerm();
   }
 }
