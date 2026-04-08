@@ -488,8 +488,13 @@ class BrandGuidelineService:
                 detail="Parent workspace for this guideline not found.",
             )
 
-        if not is_system_admin and not await self.workspace_repo.is_member(
-            guideline.workspace_id, current_user.id
+        if (
+            not is_system_admin
+            and workspace.scope != WorkspaceScopeEnum.PUBLIC
+            and current_user.id != workspace.owner_id
+            and not await self.workspace_repo.is_member(
+                guideline.workspace_id, current_user.id
+            )
         ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -513,8 +518,12 @@ class BrandGuidelineService:
 
         if not workspace.scope == WorkspaceScopeEnum.PUBLIC:
             is_system_admin = UserRoleEnum.ADMIN in current_user.roles
-            if not is_system_admin and not await self.workspace_repo.is_member(
-                workspace_id, current_user.id
+            if (
+                not is_system_admin
+                and current_user.id != workspace.owner_id
+                and not await self.workspace_repo.is_member(
+                    workspace_id, current_user.id
+                )
             ):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
