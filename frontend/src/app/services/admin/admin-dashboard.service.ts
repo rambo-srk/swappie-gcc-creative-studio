@@ -26,6 +26,8 @@ export interface AdminOverviewStats {
   videosGenerated: number;
   audiosGenerated: number;
   totalMedia: number;
+  userUploadedMedia: number;
+  overallTotalMedia: number;
 }
 
 export interface AdminMediaOverTime {
@@ -107,8 +109,17 @@ export class AdminDashboardService {
     );
   }
 
-  getActiveRoles(): Observable<AdminActiveRole[]> {
-    return this.http.get<AdminActiveRole[]>(`${this.baseUrl}/active-roles`);
+  getActiveRoles(
+    startDate?: string,
+    endDate?: string,
+  ): Observable<AdminActiveRole[]> {
+    const params =
+      startDate && endDate
+        ? `?start_date=${startDate}&end_date=${endDate}`
+        : '';
+    return this.http.get<AdminActiveRole[]>(
+      `${this.baseUrl}/active-roles${params}`,
+    );
   }
 
   getGenerationHealth(
@@ -124,9 +135,16 @@ export class AdminDashboardService {
     );
   }
 
-  getActiveUsersMonthly(): Observable<AdminMonthlyActiveUsers[]> {
+  getActiveUsersMonthly(
+    startDate?: string,
+    endDate?: string,
+  ): Observable<AdminMonthlyActiveUsers[]> {
+    const params =
+      startDate && endDate
+        ? `?start_date=${startDate}&end_date=${endDate}`
+        : '';
     return this.http.get<AdminMonthlyActiveUsers[]>(
-      `${this.baseUrl}/active-users-monthly`,
+      `${this.baseUrl}/active-users-monthly${params}`,
     );
   }
 }

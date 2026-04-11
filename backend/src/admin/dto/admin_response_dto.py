@@ -22,6 +22,8 @@ class AdminOverviewStats(BaseDto):
     videos_generated: int
     audios_generated: int
     total_media: int
+    user_uploaded_media: int
+    overall_total_media: int
 
 
 class AdminMediaOverTime(BaseDto):

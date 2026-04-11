@@ -17,6 +17,7 @@ from sqlalchemy import func, case, select
 from src.users.user_model import User
 from src.workspaces.schema.workspace_model import Workspace
 from src.common.schema.media_item_model import MediaItem
+from src.source_assets.schema.source_asset_model import SourceAsset
 from src.admin.dto.admin_response_dto import (
     AdminOverviewStats,
     AdminMediaOverTime,
@@ -25,7 +26,7 @@ from src.admin.dto.admin_response_dto import (
     AdminGenerationHealth,
     AdminMonthlyActiveUsers,
 )
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class AdminService:
@@ -41,17 +42,37 @@ class AdminService:
             )
         if end_date:
             query = query.where(
-                model.created_at <= datetime.strptime(end_date, "%Y-%m-%d")
+                model.created_at
+                < datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
             )
         return query
 
-    async def get_overview_stats(self) -> AdminOverviewStats:
-        scalar_users = (
-            await self.db.execute(select(func.count(User.id)))
-        ).scalar_one()
+    async def get_overview_stats(
+        self, start_date: str | None = None, end_date: str | None = None
+    ) -> AdminOverviewStats:
+        users_query = select(func.count(User.id))
+        workspaces_query = select(func.count(Workspace.id))
+        uploaded_query = select(func.count(SourceAsset.id))
+
+        if end_date:
+            users_query = users_query.where(
+                User.created_at
+                < datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            )
+            workspaces_query = workspaces_query.where(
+                Workspace.created_at
+                < datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            )
+
+        uploaded_query = self._apply_date_filters(
+            uploaded_query, SourceAsset, start_date, end_date
+        )
+
+        scalar_users = (await self.db.execute(users_query)).scalar_one()
         scalar_workspaces = (
-            await self.db.execute(select(func.count(Workspace.id)))
+            await self.db.execute(workspaces_query)
         ).scalar_one()
+        scalar_uploaded = (await self.db.execute(uploaded_query)).scalar_one()
 
         query_media = select(
             func.sum(
@@ -82,6 +103,9 @@ class AdminService:
                 )
             ).label("audios"),
         )
+        query_media = self._apply_date_filters(
+            query_media, MediaItem, start_date, end_date
+        )
         media_counts = (await self.db.execute(query_media)).first()
 
         images = int(media_counts.images or 0) if media_counts else 0
@@ -95,6 +119,9 @@ class AdminService:
             videos_generated=videos,
             audios_generated=audios,
             total_media=images + videos + audios,
+            user_uploaded_media=scalar_uploaded or 0,
+            overall_total_media=(images + videos + audios)
+            + (scalar_uploaded or 0),
         )
 
     async def get_media_over_time(
@@ -206,15 +233,26 @@ class AdminService:
             for row in workspace_stats
         ]
 
-    async def get_active_roles(self) -> list[AdminActiveRole]:
-        roles_stats = (
-            await self.db.execute(
-                select(
-                    func.unnest(User.roles).label("role"),
-                    func.count(User.id).label("count"),
-                ).group_by("role")
+    async def get_active_roles(
+        self, start_date: str | None = None, end_date: str | None = None
+    ) -> list[AdminActiveRole]:
+        # 1. Find distinct emails of users who generated media in the range
+        active_emails = select(MediaItem.user_email).distinct()
+        active_emails = self._apply_date_filters(
+            active_emails, MediaItem, start_date, end_date
+        )
+
+        # 2. Breakdown distinct unnested roles for those active users
+        query = (
+            select(
+                func.unnest(User.roles).label("role"),
+                func.count(func.distinct(User.id)).label("count"),
             )
-        ).all()
+            .where(User.email.in_(active_emails))
+            .group_by("role")
+        )
+
+        roles_stats = (await self.db.execute(query)).all()
 
         return [
             AdminActiveRole(role=row.role, count=row.count)
@@ -237,18 +275,37 @@ class AdminService:
             for row in health_stats
         ]
 
-    async def get_active_users_monthly(self) -> list[AdminMonthlyActiveUsers]:
-        query = (
-            select(
-                func.to_char(MediaItem.created_at, "YYYY-MM").label("month"),
-                func.count(func.distinct(MediaItem.user_email)).label("count"),
-            )
-            .group_by("month")
-            .order_by("month")
+    async def get_active_users_monthly(
+        self, start_date: str | None = None, end_date: str | None = None
+    ) -> list[AdminMonthlyActiveUsers]:
+        query = select(
+            func.to_char(MediaItem.created_at, "YYYY-MM").label("month"),
+            func.count(func.distinct(MediaItem.user_email)).label("count"),
         )
+        query = self._apply_date_filters(query, MediaItem, start_date, end_date)
+        query = query.group_by("month").order_by("month")
         results = (await self.db.execute(query)).all()
+        result_dict = {row.month: row.count for row in results}
+
+        if start_date and end_date:
+            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+        else:
+            end_dt = datetime.today()
+            start_dt = end_dt - timedelta(days=180)
+
+        months = []
+        curr_dt = start_dt
+        while curr_dt <= end_dt:
+            months.append(curr_dt.strftime("%Y-%m"))
+            if curr_dt.month == 12:
+                curr_dt = curr_dt.replace(year=curr_dt.year + 1, month=1)
+            else:
+                curr_dt = curr_dt.replace(month=curr_dt.month + 1)
+
+        months = sorted(list(set(months)))
 
         return [
-            AdminMonthlyActiveUsers(month=row.month, count=row.count)
-            for row in results
+            AdminMonthlyActiveUsers(month=m, count=result_dict.get(m, 0))
+            for m in months
         ]

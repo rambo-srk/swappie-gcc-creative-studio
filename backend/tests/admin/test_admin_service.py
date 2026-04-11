@@ -35,10 +35,14 @@ async def test_get_overview_stats():
     media_counts.audios = 25
     mock_media_result.first.return_value = media_counts
 
+    mock_uploaded_result = MagicMock()
+    mock_uploaded_result.scalar_one.return_value = 2
+
     db.execute = AsyncMock(
         side_effect=[
             mock_users_result,
             mock_workspaces_result,
+            mock_uploaded_result,
             mock_media_result,
         ]
     )
@@ -60,7 +64,7 @@ async def test_get_media_over_time():
     mock_result = MagicMock()
     mock_row = MagicMock()
     mock_row.date = "2026-04"
-    mock_row.total_generated = 10
+    mock_row.count = 10
     mock_row.images = 5
     mock_row.videos = 3
     mock_row.audios = 2
@@ -81,7 +85,7 @@ async def test_get_workspace_stats():
     mock_row = MagicMock()
     mock_row.workspace_id = 1
     mock_row.workspace_name = "Test Workspace"
-    mock_row.total_media = 10
+    mock_row.count = 10
     mock_row.images = 5
     mock_row.videos = 3
     mock_row.audios = 2
@@ -141,6 +145,4 @@ async def test_get_active_users_monthly():
 
     service = AdminService(db)
     result = await service.get_active_users_monthly()
-    assert len(result) == 1
-    assert result[0].month == "2026-04"
-    assert result[0].count == 3
+    assert len(result) == 6

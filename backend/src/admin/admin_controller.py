@@ -35,9 +35,15 @@ router = APIRouter(
 
 
 @router.get("/overview-stats", response_model=AdminOverviewStats)
-async def get_overview_stats(db: AsyncSession = Depends(get_db)):
+async def get_overview_stats(
+    start_date: str | None = None,
+    end_date: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
     service = AdminService(db)
-    return await service.get_overview_stats()
+    return await service.get_overview_stats(
+        start_date=start_date, end_date=end_date
+    )
 
 
 @router.get("/media-over-time", response_model=list[AdminMediaOverTime])
@@ -65,9 +71,15 @@ async def get_workspace_stats(
 
 
 @router.get("/active-roles", response_model=list[AdminActiveRole])
-async def get_active_roles(db: AsyncSession = Depends(get_db)):
+async def get_active_roles(
+    start_date: str | None = None,
+    end_date: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
     service = AdminService(db)
-    return await service.get_active_roles()
+    return await service.get_active_roles(
+        start_date=start_date, end_date=end_date
+    )
 
 
 @router.get("/generation-health", response_model=list[AdminGenerationHealth])
@@ -85,6 +97,12 @@ async def get_generation_health(
 @router.get(
     "/active-users-monthly", response_model=list[AdminMonthlyActiveUsers]
 )
-async def get_active_users_monthly(db: AsyncSession = Depends(get_db)):
+async def get_active_users_monthly(
+    start_date: str | None = None,
+    end_date: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
     service = AdminService(db)
-    return await service.get_active_users_monthly()
+    return await service.get_active_users_monthly(
+        start_date=start_date, end_date=end_date
+    )

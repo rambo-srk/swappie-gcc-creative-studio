@@ -380,6 +380,10 @@ class GalleryService:
 
         response = await self._create_gallery_response(item)
         response.tags = await self.tags_repo.get_tags_for_media_item(item_id)
+        if item.user_id:
+            user = await self.user_repo.get_by_id(item.user_id)
+            if user:
+                response.user_picture = user.picture
         return response
 
     async def bulk_delete(

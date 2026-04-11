@@ -18,3 +18,13 @@
 .d3-chart {
   min-height: 350px;
 }
+
+::ng-deep .d3-chart {
+  .hover-rect,
+  rect:not([width="12"]),
+  circle,
+  path:not(.domain) {
+    cursor: pointer !important;
+  }
+}
+
