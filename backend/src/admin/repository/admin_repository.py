@@ -29,6 +29,7 @@ from src.admin.dto.admin_response_dto import (
 )
 from datetime import datetime, timedelta, timezone
 
+
 class AdminRepository:
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
